@@ -1,5 +1,7 @@
 # AccessAssist
 
+🚧 **Currently in Development:** Adding a list of places on the map screen that when clicked, lead to a screen displaying place details, ratings in each category, access tags, and a list of accessibility ratings. 🚧
+
 AccessAssist is a React Native mobile application that helps users find and review accessible places. The app provides accessibility ratings and detailed information about physical, sensory, and cognitive accessibility features of various facilities.
 
 ## Features
