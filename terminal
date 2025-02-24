@@ -1,0 +1,11 @@
+expo init AccessAssist
+cd AccessAssist
+npx expo install @react-navigation/native @react-navigation/native-stack
+npx expo install firebase
+npx expo install @react-native-async-storage/async-storage expo-location react-native-maps
+npx expo install react-native-safe-area-context
+find src -name "*.js" -type f -delete 
+rm -rf app/ 
+npm uninstall expo-router 
+mkdir -p assets
+touch assets/icon.png assets/splash.png assets/adaptive-icon.png assets/favicon.png 
