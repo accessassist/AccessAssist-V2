@@ -1,50 +1,33 @@
-# Welcome to your Expo app 👋
+# AccessAssist
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+AccessAssist is a React Native mobile application that helps users find and review accessible places. The app provides accessibility ratings and detailed information about physical, sensory, and cognitive accessibility features of various facilities.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **User Authentication**
 
-   ```bash
-   npm install
-   ```
+  - Email/password login
+  - Account creation with first name, last name, and email
+  - Secure authentication using Firebase
 
-2. Start the app
+- **Location Services**
 
-   ```bash
-    npx expo start
-   ```
+  - Real-time user location tracking
+  - Map view of nearby facilities
+  - Search functionality for finding accessible places
 
-In the output, you'll find options to open the app in a
+- **Accessibility Information**
+  - Physical accessibility ratings
+  - Sensory accessibility ratings
+  - Cognitive accessibility ratings
+  - User-generated reviews and accessibility tags
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Tech Stack
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- React Native with Expo
+- TypeScript
+- Firebase Authentication
+- Cloud Firestore
+- React Navigation
+- React Native Maps
+- Expo Location
