@@ -1,4 +1,4 @@
-import { db, COLLECTIONS } from "./firebase";
+import { db } from "../config/firebase";
 import {
   doc,
   getDoc,
@@ -14,6 +14,14 @@ import {
   QuerySnapshot,
 } from "firebase/firestore";
 import { User, Facility, Review, AccessTag } from "../types";
+
+// Add COLLECTIONS constant
+export const COLLECTIONS = {
+  USERS: "users",
+  FACILITIES: "facilities",
+  REVIEWS: "reviews",
+  ACCESS_TAGS: "access_tags",
+};
 
 // User Functions
 export const createUser = async (

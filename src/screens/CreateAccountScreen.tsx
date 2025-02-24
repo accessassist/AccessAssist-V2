@@ -10,7 +10,7 @@ import {
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../api/firebase";
+import { auth } from "../config/firebase";
 import { createUser } from "../api/firestoreService";
 
 type Props = NativeStackScreenProps<RootStackParamList, "CreateAccount">;

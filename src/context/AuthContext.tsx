@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { auth } from "../api/firebase";
+import { auth } from "../config/firebase";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthContextType, User } from "../types";
@@ -18,6 +18,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const userData: User = {
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
+          firstName: "",
+          lastName: "",
           preferredAccessTags: [],
           createdAt: new Date(),
         };
