@@ -9,7 +9,7 @@ import {
   Linking,
   Platform,
 } from "react-native";
-import { Facility } from "../types";
+import { Facility, AccessTag } from "../types";
 
 interface PlacesListProps {
   places: Facility[];
@@ -25,6 +25,20 @@ const RatingTile: React.FC<RatingTileProps> = ({ category, rating }) => (
   <View style={styles.ratingTile}>
     <Text style={styles.ratingCategory}>{category}</Text>
     <Text style={styles.ratingValue}>{rating.toFixed(1)}</Text>
+  </View>
+);
+
+interface AccessTagsProps {
+  tags: string[];
+}
+
+const AccessTags: React.FC<AccessTagsProps> = ({ tags }) => (
+  <View style={styles.accessTagsContainer}>
+    {tags.slice(0, 3).map((tag, index) => (
+      <View key={index} style={styles.accessTag}>
+        <Text style={styles.accessTagText}>{tag}</Text>
+      </View>
+    ))}
   </View>
 );
 
@@ -56,7 +70,6 @@ const PlacesList: React.FC<PlacesListProps> = ({ places, onPlaceSelect }) => {
             onPress={() => onPlaceSelect(place)}
           >
             <View style={styles.imageContainer}>
-              {/* Placeholder for image */}
               <View style={styles.imagePlaceholder} />
             </View>
             <View style={styles.contentContainer}>
@@ -70,6 +83,7 @@ const PlacesList: React.FC<PlacesListProps> = ({ places, onPlaceSelect }) => {
                   rating={place.cognitiveRating}
                 />
               </View>
+              <AccessTags tags={place.commonAccessTags} />
               <TouchableOpacity
                 style={styles.directionsButton}
                 onPress={() => openDirections(place)}
@@ -158,6 +172,28 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "500",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 8,
+  },
+  accessTagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 8,
+  },
+  accessTag: {
+    backgroundColor: "#e8f4fd",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+  accessTagText: {
+    fontSize: 12,
+    color: "#0066cc",
   },
 });
 

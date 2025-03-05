@@ -20,6 +20,7 @@ export interface Facility {
   cognitiveRating: number;
   reviewCount: number;
   commonAccessTags: string[];
+  accessTags: string[];
   createdAt: Date;
 }
 

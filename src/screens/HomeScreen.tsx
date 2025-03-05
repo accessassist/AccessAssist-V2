@@ -9,6 +9,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { Facility } from "../types";
 import { Ionicons } from "@expo/vector-icons";
+import { searchPlaces } from "../services/googlePlacesService";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
@@ -38,9 +39,21 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleSearch = async (query: string): Promise<void> => {
-    // Implement search functionality here
-    // This will integrate with your map service
-    setShowResults(true);
+    try {
+      const results = await searchPlaces(
+        query,
+        region
+          ? {
+              latitude: region.latitude,
+              longitude: region.longitude,
+            }
+          : undefined
+      );
+      setSearchResults(results);
+      setShowResults(true);
+    } catch (error) {
+      console.error("Error searching places:", error);
+    }
   };
 
   const handleLogout = async () => {
