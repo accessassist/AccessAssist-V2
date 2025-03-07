@@ -1,5 +1,11 @@
 import "dotenv/config";
 
+if (!process.env.GOOGLE_PLACES_API_KEY) {
+  console.warn(
+    "Warning: GOOGLE_PLACES_API_KEY is not set in environment variables"
+  );
+}
+
 export default {
   expo: {
     name: "AccessAssist",
