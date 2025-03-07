@@ -70,7 +70,15 @@ const PlacesList: React.FC<PlacesListProps> = ({ places, onPlaceSelect }) => {
             onPress={() => onPlaceSelect(place)}
           >
             <View style={styles.imageContainer}>
-              <View style={styles.imagePlaceholder} />
+              {place.photo ? (
+                <Image
+                  source={{ uri: place.photo }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.imagePlaceholder} />
+              )}
             </View>
             <View style={styles.contentContainer}>
               <Text style={styles.name}>{place.name}</Text>
@@ -122,12 +130,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     marginRight: 15,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
   },
   imagePlaceholder: {
     width: "100%",
     height: "100%",
     backgroundColor: "#eee",
-    borderRadius: 8,
   },
   contentContainer: {
     flex: 1,
@@ -172,11 +185,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "500",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 8,
   },
   accessTagsContainer: {
     flexDirection: "row",
