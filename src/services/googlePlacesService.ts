@@ -37,10 +37,8 @@ export const searchPlaces = async (
 ): Promise<Facility[]> => {
   try {
     const apiKey = Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
-    console.log("API Key available:", !!apiKey); // Log if key exists (without exposing it)
 
     const url = "https://places.googleapis.com/v1/places:searchText";
-    console.log("Request URL:", url);
 
     const requestBody = {
       textQuery: query,
@@ -57,35 +55,26 @@ export const searchPlaces = async (
       }),
     };
 
-    console.log("Request body:", JSON.stringify(requestBody, null, 2));
-
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey || "",
         "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.location",
+          "places.displayName,places.formattedAddress,places.location,places.photos",
       },
       body: JSON.stringify(requestBody),
     });
 
-    console.log("Response status:", response.status);
-    console.log(
-      "Response headers:",
-      JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)
-    );
-
     if (!response.ok) {
       const errorData = await response.json();
-      console.log("Error response:", JSON.stringify(errorData, null, 2));
+      console.error("Places API error:", errorData);
       throw new Error(
         `Failed to fetch places: ${response.status} ${response.statusText}`
       );
     }
 
     const data = await response.json();
-    console.log("Response data:", JSON.stringify(data, null, 2));
 
     if (!data.places || data.places.length === 0) {
       return [];
@@ -99,6 +88,9 @@ export const searchPlaces = async (
         latitude: place.location.latitude,
         longitude: place.location.longitude,
       },
+      photo: place.photos?.[0]?.name
+        ? `https://places.googleapis.com/v1/${place.photos[0].name}/media?key=${apiKey}&maxHeightPx=400&maxWidthPx=400`
+        : null,
       physicalRating: 0,
       sensoryRating: 0,
       cognitiveRating: 0,
