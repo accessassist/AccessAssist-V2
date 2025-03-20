@@ -7,6 +7,13 @@ export interface User {
   createdAt: Date;
 }
 
+export interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<User>;
+  logout: () => Promise<void>;
+}
+
 export interface Facility {
   id: string;
   name: string;
@@ -15,12 +22,19 @@ export interface Facility {
     latitude: number;
     longitude: number;
   };
+  photo?: string | null;
+  photos?: string[];
+  placeId?: string;
   physicalRating: number;
   sensoryRating: number;
   cognitiveRating: number;
+  rating?: number;
+  userRatingsTotal?: number;
   reviewCount: number;
   commonAccessTags: string[];
   accessTags: string[];
+  accessibilityTags?: string[];
+  reviews?: Review[];
   createdAt: Date;
 }
 
@@ -28,25 +42,20 @@ export interface Review {
   id: string;
   userId: string;
   facilityId: string;
-  text: string;
-  photoUrl?: string;
-  accessTags: string[];
-  physicalRating: number;
-  sensoryRating: number;
-  cognitiveRating: number;
+  rating: number;
+  comment: string;
+  physicalRating?: number;
+  sensoryRating?: number;
+  cognitiveRating?: number;
+  accessTags?: string[];
+  accessibilityTags?: string[];
   createdAt: Date;
 }
 
 export interface AccessTag {
   id: string;
   name: string;
-  category: "physical" | "sensory" | "cognitive";
-  description?: string;
-}
-
-export interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  description: string;
+  icon: string;
+  category?: "physical" | "sensory" | "cognitive";
 }

@@ -21,6 +21,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const handleLogin = async () => {
     try {
       await login(email, password);
+      // The navigation will happen automatically when the user state is updated
     } catch (error) {
       Alert.alert("Login Error", (error as Error).message);
     }

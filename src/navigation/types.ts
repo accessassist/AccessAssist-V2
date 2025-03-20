@@ -1,8 +1,14 @@
 import { Facility } from "../types";
 
+export type TabParamList = {
+  Home: undefined;
+  Profile: undefined;
+};
+
 export type RootStackParamList = {
   Login: undefined;
   CreateAccount: undefined;
-  Home: undefined;
+  MainApp: undefined;
   Place: { place: Facility };
+  Profile: undefined;
 };

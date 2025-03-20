@@ -19,6 +19,7 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
+    newArchEnabled: true,
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
