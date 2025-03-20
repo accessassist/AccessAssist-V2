@@ -16,13 +16,25 @@ const addReviewToDatabase = async (review: Review): Promise<void> => {
   await addDoc(collection(db, "reviews"), review);
 };
 
-const getFacilityReviews = async (facilityId: string): Promise<Review[]> => {
-  const q = query(
-    collection(db, "reviews"),
-    where("facilityId", "==", facilityId)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review));
+export const getFacilityReviews = async (
+  facilityId: string
+): Promise<Review[]> => {
+  try {
+    const reviewsRef = collection(db, "reviews");
+    const q = query(reviewsRef, where("facilityId", "==", facilityId));
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        } as Review)
+    );
+  } catch (error) {
+    console.error("Error fetching facility reviews:", error);
+    return [];
+  }
 };
 
 const getFacility = async (facilityId: string): Promise<Facility> => {
