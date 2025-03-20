@@ -107,7 +107,7 @@ export const searchPlaces = async (
         "Elevator",
         "Accessible Parking",
       ],
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     }));
   } catch (error) {
     console.error("Google Places search error:", error);

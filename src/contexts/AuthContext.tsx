@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           firstName: firebaseUser.displayName?.split(" ")[0] || "",
           lastName: firebaseUser.displayName?.split(" ")[1] || "",
           preferredAccessTags: [],
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         };
         setUser(userObj);
       } else {
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       firstName: firebaseUser.displayName?.split(" ")[0] || "",
       lastName: firebaseUser.displayName?.split(" ")[1] || "",
       preferredAccessTags: [],
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
 
     setUser(userObj);

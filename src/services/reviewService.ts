@@ -53,23 +53,23 @@ const updateFacility = async (
 
 export const addReview = async (
   facilityId: string,
-  review: Review
+  reviewData: Omit<Review, "id" | "rating">
 ): Promise<void> => {
   try {
-    // Add the review to the database
-    await addReviewToDatabase(review);
+    const reviewsRef = collection(db, "reviews");
+    const rating = Math.round(
+      ((reviewData.physicalRating || 0) +
+        (reviewData.sensoryRating || 0) +
+        (reviewData.cognitiveRating || 0)) /
+        3
+    );
 
-    // Get all reviews for this facility
-    const facilityReviews = await getFacilityReviews(facilityId);
-
-    // Get the facility
-    const facility = await getFacility(facilityId);
-
-    // Update facility metrics
-    const updatedFacility = updateFacilityMetrics(facility, facilityReviews);
-
-    // Save updated facility
-    await updateFacility(facilityId, updatedFacility);
+    await addDoc(reviewsRef, {
+      ...reviewData,
+      rating,
+      facilityId,
+      createdAt: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("Error adding review:", error);
     throw error;

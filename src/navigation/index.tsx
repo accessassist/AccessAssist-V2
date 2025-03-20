@@ -8,6 +8,7 @@ import BottomTabNavigator from "./BottomTabNavigator";
 import LoginScreen from "../screens/LoginScreen";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import PlaceScreen from "../screens/PlaceScreen";
+import AddReviewScreen from "../screens/AddReviewScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -35,6 +36,14 @@ const Navigation: React.FC = () => {
               options={{
                 headerShown: true,
                 title: "Details",
+              }}
+            />
+            <Stack.Screen
+              name="AddReview"
+              component={AddReviewScreen}
+              options={{
+                headerShown: true,
+                title: "Add Review",
               }}
             />
           </>
