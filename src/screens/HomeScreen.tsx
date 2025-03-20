@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import MapView, { Region } from "react-native-maps";
+import MapView, { Region, Marker } from "react-native-maps";
 import { getCurrentLocation } from "../api/locationService";
 import SearchBar from "../components/SearchBar";
 import PlacesList from "../components/PlacesList";
@@ -55,6 +55,31 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       );
       setSearchResults(results);
       setShowResults(true);
+
+      // Calculate the bounds of all results
+      if (results.length > 0 && mapRef.current) {
+        const coordinates = results.map((place) => ({
+          latitude: place.location.latitude,
+          longitude: place.location.longitude,
+        }));
+
+        // Find min and max coordinates
+        const minLat = Math.min(...coordinates.map((c) => c.latitude));
+        const maxLat = Math.max(...coordinates.map((c) => c.latitude));
+        const minLng = Math.min(...coordinates.map((c) => c.longitude));
+        const maxLng = Math.max(...coordinates.map((c) => c.longitude));
+
+        // Add padding to the region
+        const PADDING = 0.1; // 10% padding
+        const newRegion = {
+          latitude: (minLat + maxLat) / 2,
+          longitude: (minLng + maxLng) / 2,
+          latitudeDelta: (maxLat - minLat) * (1 + PADDING),
+          longitudeDelta: (maxLng - minLng) * (1 + PADDING),
+        };
+
+        mapRef.current.animateToRegion(newRegion, 1000);
+      }
     } catch (error) {
       console.error("Error searching places:", error);
     }
@@ -70,7 +95,21 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           initialRegion={region}
           showsUserLocation
           showsMyLocationButton
-        />
+        >
+          {searchResults.map((place) => (
+            <Marker
+              key={place.id}
+              coordinate={{
+                latitude: place.location.latitude,
+                longitude: place.location.longitude,
+              }}
+              title={place.name}
+              description={place.address}
+              pinColor="red"
+              onPress={() => navigation.navigate("Place", { place })}
+            />
+          ))}
+        </MapView>
       )}
       {showResults && (
         <PlacesList
