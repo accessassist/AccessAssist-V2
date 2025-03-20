@@ -95,8 +95,18 @@ export const searchPlaces = async (
       sensoryRating: 0,
       cognitiveRating: 0,
       reviewCount: 0,
-      commonAccessTags: [],
-      accessTags: [],
+      commonAccessTags: [
+        "Wheelchair Accessible",
+        "Braille Signage",
+        "Quiet Space",
+      ], // Sample tags for testing
+      accessTags: [
+        "Wheelchair Accessible",
+        "Braille Signage",
+        "Quiet Space",
+        "Elevator",
+        "Accessible Parking",
+      ],
       createdAt: new Date(),
     }));
   } catch (error) {
