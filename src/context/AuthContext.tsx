@@ -1,6 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { auth } from "../config/firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  UserCredential,
+} from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthContextType, User } from "../types";
 
@@ -33,9 +37,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<User> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const userData: User = {
+        id: userCredential.user.uid,
+        email: userCredential.user.email || "",
+        firstName: "",
+        lastName: "",
+        preferredAccessTags: [],
+        createdAt: new Date(),
+      };
+
+      setUser(userData);
+      return userData;
     } catch (error) {
       throw error;
     }

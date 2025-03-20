@@ -3,9 +3,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "./types";
+import BottomTabNavigator from "./BottomTabNavigator";
 
 import LoginScreen from "../screens/LoginScreen";
-import HomeScreen from "../screens/HomeScreen";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,12 +22,8 @@ const Navigation: React.FC = () => {
       <Stack.Navigator>
         {user ? (
           // Auth screens
-          <Stack.Group>
-            <Stack.Screen
-              name="Home"
-              component={HomeScreen}
-              options={{ headerShown: false }}
-            />
+          <Stack.Group screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="MainApp" component={BottomTabNavigator} />
           </Stack.Group>
         ) : (
           // Non-auth screens

@@ -1,24 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import MapView, { Region } from "react-native-maps";
 import { getCurrentLocation } from "../api/locationService";
 import SearchBar from "../components/SearchBar";
 import PlacesList from "../components/PlacesList";
-import { useAuth } from "../context/AuthContext";
+import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/types";
+import { RootStackParamList, TabParamList } from "../navigation/types";
 import { Facility } from "../types";
-import { Ionicons } from "@expo/vector-icons";
 import { searchPlaces } from "../services/googlePlacesService";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Home">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, "Home">,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [region, setRegion] = useState<Region | null>(null);
   const [searchResults, setSearchResults] = useState<Facility[]>([]);
   const [showResults, setShowResults] = useState(false);
   const mapRef = useRef<MapView | null>(null);
-  const { logout } = useAuth();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     initializeLocation();
@@ -56,24 +60,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={24} color="#007bff" />
-      </TouchableOpacity>
       <SearchBar onSearch={handleSearch} />
       {region && (
         <MapView
           ref={mapRef}
-          style={styles.map}
+          style={[styles.map, { paddingBottom: insets.bottom }]}
           initialRegion={region}
           showsUserLocation
           showsMyLocationButton
@@ -97,24 +90,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
-  },
-  logoutButton: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    zIndex: 1,
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    height: Dimensions.get("window").height - 60, // Account for tab bar height
   },
 });
 
