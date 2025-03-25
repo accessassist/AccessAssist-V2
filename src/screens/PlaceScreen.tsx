@@ -9,39 +9,49 @@ import {
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { Review, User } from "../types";
+import { Review, User, Facility } from "../types";
 import StarRating from "../components/StarRating";
 import ReviewItem from "../components/ReviewItem";
 import { getFacilityReviews } from "../services/reviewService";
 import { useAuth } from "../contexts/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../config/firebase";
+import { useFocusEffect } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Place">;
 
 const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { place } = route.params;
+  const { place: initialPlace } = route.params;
+  const [place, setPlace] = useState<Facility>(initialPlace);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<Record<string, User>>({});
   const { user } = useAuth();
 
-  useEffect(() => {
-    navigation.setOptions({
-      title: "Details",
-    });
-    loadReviews();
-  }, []);
-
-  const loadReviews = async () => {
+  const loadPlaceData = async () => {
     try {
+      // Fetch updated place data
+      const facilityRef = doc(db, "facilities", place.id);
+      const facilityDoc = await getDoc(facilityRef);
+      if (facilityDoc.exists()) {
+        setPlace({ id: facilityDoc.id, ...facilityDoc.data() } as Facility);
+      }
+
+      // Fetch reviews
       const fetchedReviews = await getFacilityReviews(place.id);
       setReviews(fetchedReviews);
-      // TODO: Fetch user details for each review
       setLoading(false);
     } catch (error) {
-      console.error("Error loading reviews:", error);
+      console.error("Error loading place data:", error);
       setLoading(false);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadPlaceData();
+    }, [place.id])
+  );
 
   const handleAddReview = () => {
     navigation.navigate("AddReview", { facilityId: place.id });

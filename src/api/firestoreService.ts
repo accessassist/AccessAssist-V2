@@ -31,13 +31,47 @@ export const createUser = async (
   await setDoc(doc(db, COLLECTIONS.USERS, userId), {
     ...userData,
     preferredAccessTags: [],
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   });
 };
 
 export const getUser = async (userId: string): Promise<User | null> => {
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
   return userDoc.exists() ? (userDoc.data() as User) : null;
+};
+
+export const updateUser = async (
+  userId: string,
+  userData: Partial<User>
+): Promise<void> => {
+  const userRef = doc(db, COLLECTIONS.USERS, userId);
+  await updateDoc(userRef, {
+    ...userData,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const updateUserPreferences = async (
+  userId: string,
+  preferredAccessTags: string[]
+): Promise<void> => {
+  const userRef = doc(db, COLLECTIONS.USERS, userId);
+  await updateDoc(userRef, {
+    preferredAccessTags,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const getUserReviews = async (userId: string): Promise<Review[]> => {
+  const reviewsQuery = query(
+    collection(db, COLLECTIONS.REVIEWS),
+    where("userId", "==", userId)
+  );
+  const reviewsSnapshot = await getDocs(reviewsQuery);
+  return reviewsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Review[];
 };
 
 // Facility Functions

@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from "firebase/auth";
+import { getUser, createUser } from "../api/firestoreService";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -26,16 +27,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Transform Firebase user to your User type
-        const userObj: User = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          firstName: firebaseUser.displayName?.split(" ")[0] || "",
-          lastName: firebaseUser.displayName?.split(" ")[1] || "",
-          preferredAccessTags: [],
-          createdAt: new Date().toISOString(),
-        };
-        setUser(userObj);
+        // Try to get user data from Firestore
+        const userData = await getUser(firebaseUser.uid);
+        if (userData) {
+          setUser(userData);
+        } else {
+          // If user doesn't exist in Firestore, create a basic user object
+          const userObj: User = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            firstName: firebaseUser.displayName?.split(" ")[0] || "",
+            lastName: firebaseUser.displayName?.split(" ")[1] || "",
+            preferredAccessTags: [],
+            createdAt: new Date().toISOString(),
+          };
+          setUser(userObj);
+        }
       } else {
         setUser(null);
       }
@@ -53,6 +60,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     );
     const firebaseUser = userCredential.user;
 
+    // Try to get user data from Firestore
+    const userData = await getUser(firebaseUser.uid);
+    if (userData) {
+      setUser(userData);
+      return userData;
+    }
+
+    // If user doesn't exist in Firestore, create a new user document
     const userObj: User = {
       id: firebaseUser.uid,
       email: firebaseUser.email || "",
@@ -62,6 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       createdAt: new Date().toISOString(),
     };
 
+    // Create the user document in Firestore
+    await createUser(firebaseUser.uid, userObj);
     setUser(userObj);
     return userObj;
   };
