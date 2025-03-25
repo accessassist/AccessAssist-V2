@@ -1,5 +1,7 @@
 import { Facility } from "../types";
 import Constants from "expo-constants";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../config/firebase";
 
 interface GooglePlacesResult {
   name: string;
@@ -27,88 +29,100 @@ const transformGooglePlacesResult = (result: GooglePlacesResult): Facility => {
     reviewCount: 0,
     commonAccessTags: [], // These will come from your database
     accessTags: [], // These will come from your database
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   };
 };
 
 export const searchPlaces = async (
   query: string,
-  userLocation?: { latitude: number; longitude: number }
+  location: { latitude: number; longitude: number },
+  radius: number = 5000
 ): Promise<Facility[]> => {
   try {
     const apiKey = Constants.expoConfig?.extra?.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      throw new Error("Google Places API key not found");
+    }
 
-    const url = "https://places.googleapis.com/v1/places:searchText";
-
-    const requestBody = {
-      textQuery: query,
-      ...(userLocation && {
-        locationBias: {
-          circle: {
-            center: {
-              latitude: userLocation.latitude,
-              longitude: userLocation.longitude,
-            },
-            radius: 5000,
-          },
+    const response = await fetch(
+      `https://places.googleapis.com/v1/places:searchText`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask":
+            "places.displayName,places.formattedAddress,places.location,places.photos,places.id",
         },
-      }),
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey || "",
-        "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.location,places.photos",
-      },
-      body: JSON.stringify(requestBody),
-    });
+        body: JSON.stringify({
+          textQuery: query,
+          locationBias: {
+            circle: {
+              center: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+              },
+              radius: radius,
+            },
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Places API error:", errorData);
-      throw new Error(
-        `Failed to fetch places: ${response.status} ${response.statusText}`
-      );
+      throw new Error("Failed to fetch places");
     }
 
     const data = await response.json();
 
-    if (!data.places || data.places.length === 0) {
-      return [];
-    }
+    // Transform and fetch additional data from database
+    const transformedPlaces = await Promise.all(
+      data.places.map(async (place: any) => {
+        // Check if place exists in database
+        const facilityRef = doc(db, "facilities", place.id);
+        const facilityDoc = await getDoc(facilityRef);
 
-    return data.places.map((place: any) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: place.displayName.text,
-      address: place.formattedAddress,
-      location: {
-        latitude: place.location.latitude,
-        longitude: place.location.longitude,
-      },
-      photo: place.photos?.[0]?.name
-        ? `https://places.googleapis.com/v1/${place.photos[0].name}/media?key=${apiKey}&maxHeightPx=400&maxWidthPx=400`
-        : null,
-      physicalRating: 0,
-      sensoryRating: 0,
-      cognitiveRating: 0,
-      reviewCount: 0,
-      commonAccessTags: [
-        "Wheelchair Accessible",
-        "Braille Signage",
-        "Quiet Space",
-      ], // Sample tags for testing
-      accessTags: [
-        "Wheelchair Accessible",
-        "Braille Signage",
-        "Quiet Space",
-        "Elevator",
-        "Accessible Parking",
-      ],
-      createdAt: new Date().toISOString(),
-    }));
+        if (facilityDoc.exists()) {
+          // If place exists, return the database data
+          return {
+            id: facilityDoc.id,
+            ...facilityDoc.data(),
+            photo: place.photos?.[0]?.name
+              ? `https://places.googleapis.com/v1/${place.photos[0].name}/media?key=${apiKey}&maxHeightPx=400&maxWidthPx=400`
+              : null,
+          } as Facility;
+        } else {
+          // If place doesn't exist, create a new facility with default values
+          const newFacility: Facility = {
+            id: place.id,
+            placeId: place.id, // Store the Google Places ID
+            name: place.displayName.text,
+            address: place.formattedAddress,
+            location: {
+              latitude: place.location.latitude,
+              longitude: place.location.longitude,
+            },
+            photo: place.photos?.[0]?.name
+              ? `https://places.googleapis.com/v1/${place.photos[0].name}/media?key=${apiKey}&maxHeightPx=400&maxWidthPx=400`
+              : null,
+            physicalRating: 0,
+            sensoryRating: 0,
+            cognitiveRating: 0,
+            reviewCount: 0,
+            commonAccessTags: [],
+            accessTags: [],
+            createdAt: new Date().toISOString(),
+          };
+
+          // Save the new facility to the database
+          await setDoc(facilityRef, newFacility);
+
+          return newFacility;
+        }
+      })
+    );
+
+    return transformedPlaces;
   } catch (error) {
     console.error("Google Places search error:", error);
     throw error;
