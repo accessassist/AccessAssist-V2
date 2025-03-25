@@ -193,14 +193,14 @@ const styles = StyleSheet.create({
   },
   accessTag: {
     backgroundColor: "#e8f4fd",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 4,
     marginBottom: 4,
   },
   accessTagText: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#0066cc",
   },
 });

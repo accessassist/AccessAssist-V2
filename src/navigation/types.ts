@@ -10,5 +10,6 @@ export type RootStackParamList = {
   CreateAccount: undefined;
   MainApp: undefined;
   Place: { place: Facility };
+  AddReview: { facilityId: string };
   Profile: undefined;
 };

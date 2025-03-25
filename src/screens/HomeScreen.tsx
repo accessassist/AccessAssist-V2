@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import MapView, { Region, Marker } from "react-native-maps";
-import { getCurrentLocation } from "../api/locationService";
-import SearchBar from "../components/SearchBar";
-import PlacesList from "../components/PlacesList";
-import { CompositeScreenProps } from "@react-navigation/native";
-import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { RootStackParamList, TabParamList } from "../navigation/types";
 import { Facility } from "../types";
+import SearchBar from "../components/SearchBar";
+import PlacesList from "../components/PlacesList";
 import { searchPlaces } from "../services/googlePlacesService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
+import { CompositeScreenProps } from "@react-navigation/native";
+import * as Location from "expo-location";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Home">,
@@ -18,72 +19,89 @@ type Props = CompositeScreenProps<
 >;
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
-  const [region, setRegion] = useState<Region | null>(null);
   const [searchResults, setSearchResults] = useState<Facility[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const mapRef = useRef<MapView | null>(null);
+  const [region, setRegion] = useState<{
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  } | null>(null);
+  const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
+  const [lastSearchQuery, setLastSearchQuery] = useState<string>("");
 
-  useEffect(() => {
-    initializeLocation();
-  }, []);
-
-  const initializeLocation = async (): Promise<void> => {
-    try {
-      const location = await getCurrentLocation();
-      setRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      });
-    } catch (error) {
-      console.error("Error getting location:", error);
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
     }
-  };
 
-  const handleSearch = async (query: string): Promise<void> => {
     try {
-      const results = await searchPlaces(
-        query,
-        region
-          ? {
-              latitude: region.latitude,
-              longitude: region.longitude,
-            }
-          : undefined
-      );
+      setLastSearchQuery(query);
+      const results = await searchPlaces(query, {
+        latitude: region?.latitude || 37.7749,
+        longitude: region?.longitude || -122.4194,
+      });
       setSearchResults(results);
       setShowResults(true);
-
-      // Calculate the bounds of all results
-      if (results.length > 0 && mapRef.current) {
-        const coordinates = results.map((place) => ({
-          latitude: place.location.latitude,
-          longitude: place.location.longitude,
-        }));
-
-        // Find min and max coordinates
-        const minLat = Math.min(...coordinates.map((c) => c.latitude));
-        const maxLat = Math.max(...coordinates.map((c) => c.latitude));
-        const minLng = Math.min(...coordinates.map((c) => c.longitude));
-        const maxLng = Math.max(...coordinates.map((c) => c.longitude));
-
-        // Add padding to the region
-        const PADDING = 0.1; // 10% padding
-        const newRegion = {
-          latitude: (minLat + maxLat) / 2,
-          longitude: (minLng + maxLng) / 2,
-          latitudeDelta: (maxLat - minLat) * (1 + PADDING),
-          longitudeDelta: (maxLng - minLng) * (1 + PADDING),
-        };
-
-        mapRef.current.animateToRegion(newRegion, 1000);
-      }
     } catch (error) {
       console.error("Error searching places:", error);
     }
   };
+
+  const refreshSearchResults = async () => {
+    if (lastSearchQuery) {
+      await handleSearch(lastSearchQuery);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshSearchResults();
+    }, [])
+  );
+
+  useEffect(() => {
+    const getLocation = async () => {
+      try {
+        // Request location permissions
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.error("Location permission not granted");
+          // Set default region (San Francisco)
+          setRegion({
+            latitude: 37.7749,
+            longitude: -122.4194,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          });
+          return;
+        }
+
+        // Get current location
+        const location = await Location.getCurrentPositionAsync({});
+        setRegion({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        });
+      } catch (error) {
+        console.error("Error getting location:", error);
+        // Set default region (San Francisco)
+        setRegion({
+          latitude: 37.7749,
+          longitude: -122.4194,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        });
+      }
+    };
+
+    getLocation();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -129,7 +147,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height - 60, // Account for tab bar height
+    height: Dimensions.get("window").height,
   },
 });
 

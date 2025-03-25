@@ -31,13 +31,47 @@ export const createUser = async (
   await setDoc(doc(db, COLLECTIONS.USERS, userId), {
     ...userData,
     preferredAccessTags: [],
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   });
 };
 
 export const getUser = async (userId: string): Promise<User | null> => {
   const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, userId));
   return userDoc.exists() ? (userDoc.data() as User) : null;
+};
+
+export const updateUser = async (
+  userId: string,
+  userData: Partial<User>
+): Promise<void> => {
+  const userRef = doc(db, COLLECTIONS.USERS, userId);
+  await updateDoc(userRef, {
+    ...userData,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const updateUserPreferences = async (
+  userId: string,
+  preferredAccessTags: string[]
+): Promise<void> => {
+  const userRef = doc(db, COLLECTIONS.USERS, userId);
+  await updateDoc(userRef, {
+    preferredAccessTags,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const getUserReviews = async (userId: string): Promise<Review[]> => {
+  const reviewsQuery = query(
+    collection(db, COLLECTIONS.REVIEWS),
+    where("userId", "==", userId)
+  );
+  const reviewsSnapshot = await getDocs(reviewsQuery);
+  return reviewsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Review[];
 };
 
 // Facility Functions
@@ -77,18 +111,69 @@ export const addReview = async (
   const facilityRef = doc(db, COLLECTIONS.FACILITIES, facilityId);
   const reviewRef = doc(collection(db, COLLECTIONS.REVIEWS));
 
+  // Add the review
   await setDoc(reviewRef, {
     ...reviewData,
     facilityId,
     createdAt: new Date(),
   });
 
+  // Get all reviews for the facility
+  const reviewsQuery = query(
+    collection(db, COLLECTIONS.REVIEWS),
+    where("facilityId", "==", facilityId)
+  );
+  const reviewsSnapshot = await getDocs(reviewsQuery);
+  const reviews = reviewsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Review[];
+
+  // Calculate new metrics
+  const physicalRatings = reviews.map((r) => r.physicalRating || 0);
+  const sensoryRatings = reviews.map((r) => r.sensoryRating || 0);
+  const cognitiveRatings = reviews.map((r) => r.cognitiveRating || 0);
+
+  const physicalRating =
+    physicalRatings.length > 0
+      ? physicalRatings.reduce((a, b) => a + b, 0) / physicalRatings.length
+      : 0;
+  const sensoryRating =
+    sensoryRatings.length > 0
+      ? sensoryRatings.reduce((a, b) => a + b, 0) / sensoryRatings.length
+      : 0;
+  const cognitiveRating =
+    cognitiveRatings.length > 0
+      ? cognitiveRatings.reduce((a, b) => a + b, 0) / cognitiveRatings.length
+      : 0;
+
+  // Calculate most common access tags
+  const tagCounts: Record<string, number> = {};
+  reviews.forEach((review) => {
+    review.accessTags?.forEach((tag) => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
+  });
+
+  // Sort tags by count and get top 3
+  const commonAccessTags = Object.entries(tagCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([tag]) => tag);
+
+  // Get all unique access tags
+  const allAccessTags = Array.from(
+    new Set(reviews.flatMap((review) => review.accessTags || []))
+  );
+
+  // Update facility document with new metrics
   await updateDoc(facilityRef, {
-    physicalRating: increment(reviewData.physicalRating || 0),
-    sensoryRating: increment(reviewData.sensoryRating || 0),
-    cognitiveRating: increment(reviewData.cognitiveRating || 0),
-    reviewCount: increment(1),
-    commonAccessTags: arrayUnion(...(reviewData.accessTags || [])),
+    physicalRating,
+    sensoryRating,
+    cognitiveRating,
+    reviewCount: reviews.length,
+    commonAccessTags,
+    accessTags: allAccessTags,
   });
 
   return reviewRef;
