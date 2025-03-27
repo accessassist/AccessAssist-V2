@@ -5,7 +5,7 @@ export interface User {
   lastName: string;
   preferredAccessTags: string[];
   photoURL?: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface AuthContextType {
@@ -36,7 +36,7 @@ export interface Facility {
   accessTags: string[];
   accessibilityTags?: string[];
   reviews?: Review[];
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface Review {
@@ -50,7 +50,7 @@ export interface Review {
   cognitiveRating?: number;
   accessTags?: string[];
   accessibilityTags?: string[];
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface AccessTag {

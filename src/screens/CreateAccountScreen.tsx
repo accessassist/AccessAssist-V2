@@ -40,7 +40,7 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
         firstName,
         lastName,
         preferredAccessTags: [],
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
       });
 
       Alert.alert("Success", "Account created successfully! Please log in.", [
