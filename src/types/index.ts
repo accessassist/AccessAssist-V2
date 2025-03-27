@@ -4,6 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   preferredAccessTags: string[];
+  photoURL?: string;
   createdAt: string;
 }
 
