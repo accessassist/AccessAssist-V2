@@ -12,7 +12,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../contexts/AuthContext";
 import StarRating from "../components/StarRating";
-import { addReview } from "../services/reviewService";
+import { addReview } from "../api/firestoreService";
 import { Facility } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddReview">;
@@ -59,6 +59,19 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     try {
+      console.log("Submitting review with data:", {
+        userId: user.id,
+        facilityId,
+        facilityName: place.name,
+        facilityAddress: place.address,
+        facilityLocation: place.location,
+        physicalRating,
+        sensoryRating,
+        cognitiveRating,
+        comment,
+        accessTags: selectedTags,
+      });
+
       await addReview(facilityId, {
         userId: user.id,
         facilityId,
@@ -80,6 +93,7 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         },
       ]);
     } catch (error) {
+      console.error("Error submitting review:", error);
       Alert.alert("Error", "Failed to submit review. Please try again.");
     }
   };
