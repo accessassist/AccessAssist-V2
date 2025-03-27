@@ -13,6 +13,7 @@ import { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../contexts/AuthContext";
 import StarRating from "../components/StarRating";
 import { addReview } from "../services/reviewService";
+import { Facility } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddReview">;
 
@@ -30,7 +31,7 @@ const SAMPLE_ACCESS_TAGS = [
 ];
 
 const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { facilityId } = route.params;
+  const { facilityId, place } = route.params;
   const { user } = useAuth();
   const [physicalRating, setPhysicalRating] = useState(0);
   const [sensoryRating, setSensoryRating] = useState(0);
@@ -61,6 +62,9 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
       await addReview(facilityId, {
         userId: user.id,
         facilityId,
+        facilityName: place.name,
+        facilityAddress: place.address,
+        facilityLocation: place.location,
         physicalRating,
         sensoryRating,
         cognitiveRating,

@@ -1,6 +1,6 @@
 import { Facility } from "../types";
 import Constants from "expo-constants";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 interface GooglePlacesResult {
@@ -13,25 +13,6 @@ interface GooglePlacesResult {
     };
   };
 }
-
-const transformGooglePlacesResult = (result: GooglePlacesResult): Facility => {
-  return {
-    id: Math.random().toString(36).substr(2, 9), // temporary ID generation
-    name: result.name,
-    address: result.vicinity,
-    location: {
-      latitude: result.geometry.location.lat,
-      longitude: result.geometry.location.lng,
-    },
-    physicalRating: 0, // These will come from your database
-    sensoryRating: 0,
-    cognitiveRating: 0,
-    reviewCount: 0,
-    commonAccessTags: [], // These will come from your database
-    accessTags: [], // These will come from your database
-    createdAt: new Date().toISOString(),
-  };
-};
 
 export const searchPlaces = async (
   query: string,
@@ -75,15 +56,28 @@ export const searchPlaces = async (
 
     const data = await response.json();
 
-    // Transform and fetch additional data from database
+    // Transform places and check if they exist in our database
     const transformedPlaces = await Promise.all(
       data.places.map(async (place: any) => {
-        // Check if place exists in database
+        // Check if place exists in our database using Google Places ID
         const facilityRef = doc(db, "facilities", place.id);
         const facilityDoc = await getDoc(facilityRef);
 
+        console.log(`Checking facility with ID: ${place.id}`);
+        console.log("Facility exists:", facilityDoc.exists());
         if (facilityDoc.exists()) {
-          // If place exists, return the database data
+          const facilityData = facilityDoc.data();
+          console.log("Facility data:", {
+            physicalRating: facilityData.physicalRating,
+            sensoryRating: facilityData.sensoryRating,
+            cognitiveRating: facilityData.cognitiveRating,
+            commonAccessTags: facilityData.commonAccessTags,
+            accessTags: facilityData.accessTags,
+          });
+        }
+
+        if (facilityDoc.exists()) {
+          // If place exists in our database, return the database data
           return {
             id: facilityDoc.id,
             ...facilityDoc.data(),
@@ -92,8 +86,8 @@ export const searchPlaces = async (
               : null,
           } as Facility;
         } else {
-          // If place doesn't exist, create a new facility with default values
-          const newFacility: Facility = {
+          // If place doesn't exist in our database, return Google Places data with default values
+          return {
             id: place.id,
             placeId: place.id, // Store the Google Places ID
             name: place.displayName.text,
@@ -112,12 +106,7 @@ export const searchPlaces = async (
             commonAccessTags: [],
             accessTags: [],
             createdAt: new Date().toISOString(),
-          };
-
-          // Save the new facility to the database
-          await setDoc(facilityRef, newFacility);
-
-          return newFacility;
+          } as Facility;
         }
       })
     );
