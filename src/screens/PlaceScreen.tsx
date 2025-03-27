@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -54,7 +55,7 @@ const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 
   const handleAddReview = () => {
-    navigation.navigate("AddReview", { facilityId: place.id });
+    navigation.navigate("AddReview", { facilityId: place.id, place });
   };
 
   return (

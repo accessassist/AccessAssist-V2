@@ -111,12 +111,40 @@ export const addReview = async (
   const facilityRef = doc(db, COLLECTIONS.FACILITIES, facilityId);
   const reviewRef = doc(collection(db, COLLECTIONS.REVIEWS));
 
+  console.log("Adding review for facility:", facilityId);
+  console.log("Review data:", reviewData);
+
+  // Check if facility exists
+  const facilityDoc = await getDoc(facilityRef);
+  console.log("Facility exists:", facilityDoc.exists());
+
+  if (!facilityDoc.exists()) {
+    console.log("Creating new facility with ID:", facilityId);
+    // If facility doesn't exist, create it with the Google Places ID
+    await setDoc(facilityRef, {
+      id: facilityId,
+      placeId: facilityId, // This is the Google Places ID
+      name: reviewData.facilityName || "",
+      address: reviewData.facilityAddress || "",
+      location: reviewData.facilityLocation || { latitude: 0, longitude: 0 },
+      physicalRating: 0,
+      sensoryRating: 0,
+      cognitiveRating: 0,
+      reviewCount: 0,
+      commonAccessTags: [],
+      accessTags: [],
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   // Add the review
-  await setDoc(reviewRef, {
+  const reviewToAdd = {
     ...reviewData,
     facilityId,
-    createdAt: new Date(),
-  });
+    createdAt: new Date().toISOString(),
+  };
+  console.log("Adding review with data:", reviewToAdd);
+  await setDoc(reviewRef, reviewToAdd);
 
   // Get all reviews for the facility
   const reviewsQuery = query(
@@ -129,10 +157,18 @@ export const addReview = async (
     ...doc.data(),
   })) as Review[];
 
+  console.log("All reviews for facility:", reviews);
+
   // Calculate new metrics
-  const physicalRatings = reviews.map((r) => r.physicalRating || 0);
-  const sensoryRatings = reviews.map((r) => r.sensoryRating || 0);
-  const cognitiveRatings = reviews.map((r) => r.cognitiveRating || 0);
+  const physicalRatings = reviews.map((r) => Number(r.physicalRating) || 0);
+  const sensoryRatings = reviews.map((r) => Number(r.sensoryRating) || 0);
+  const cognitiveRatings = reviews.map((r) => Number(r.cognitiveRating) || 0);
+
+  console.log("Raw ratings:", {
+    physicalRatings,
+    sensoryRatings,
+    cognitiveRatings,
+  });
 
   const physicalRating =
     physicalRatings.length > 0
@@ -147,13 +183,23 @@ export const addReview = async (
       ? cognitiveRatings.reduce((a, b) => a + b, 0) / cognitiveRatings.length
       : 0;
 
+  console.log("Calculated ratings:", {
+    physicalRating,
+    sensoryRating,
+    cognitiveRating,
+  });
+
   // Calculate most common access tags
   const tagCounts: Record<string, number> = {};
   reviews.forEach((review) => {
-    review.accessTags?.forEach((tag) => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-    });
+    if (review.accessTags && Array.isArray(review.accessTags)) {
+      review.accessTags.forEach((tag) => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    }
   });
+
+  console.log("Tag counts:", tagCounts);
 
   // Sort tags by count and get top 3
   const commonAccessTags = Object.entries(tagCounts)
@@ -166,15 +212,22 @@ export const addReview = async (
     new Set(reviews.flatMap((review) => review.accessTags || []))
   );
 
+  console.log("Calculated tags:", {
+    commonAccessTags,
+    allAccessTags,
+  });
+
   // Update facility document with new metrics
-  await updateDoc(facilityRef, {
-    physicalRating,
-    sensoryRating,
-    cognitiveRating,
+  const updateData = {
+    physicalRating: Number(physicalRating.toFixed(1)),
+    sensoryRating: Number(sensoryRating.toFixed(1)),
+    cognitiveRating: Number(cognitiveRating.toFixed(1)),
     reviewCount: reviews.length,
     commonAccessTags,
     accessTags: allAccessTags,
-  });
+  };
+  console.log("Updating facility with data:", updateData);
+  await updateDoc(facilityRef, updateData);
 
   return reviewRef;
 };
@@ -200,4 +253,83 @@ export const searchFacilities = async (
     id: doc.id,
     ...(doc.data() as Omit<Facility, "id">),
   }));
+};
+
+export const recalculateFacilityMetrics = async (
+  facilityId: string
+): Promise<void> => {
+  const facilityRef = doc(db, COLLECTIONS.FACILITIES, facilityId);
+  const reviewsQuery = query(
+    collection(db, COLLECTIONS.REVIEWS),
+    where("facilityId", "==", facilityId)
+  );
+
+  const reviewsSnapshot = await getDocs(reviewsQuery);
+  const reviews = reviewsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Review[];
+
+  console.log("Recalculating metrics for facility:", facilityId);
+  console.log("Found reviews:", reviews);
+
+  // Calculate new metrics
+  const physicalRatings = reviews.map((r) => Number(r.physicalRating) || 0);
+  const sensoryRatings = reviews.map((r) => Number(r.sensoryRating) || 0);
+  const cognitiveRatings = reviews.map((r) => Number(r.cognitiveRating) || 0);
+
+  console.log("Raw ratings:", {
+    physicalRatings,
+    sensoryRatings,
+    cognitiveRatings,
+  });
+
+  const physicalRating =
+    physicalRatings.length > 0
+      ? physicalRatings.reduce((a, b) => a + b, 0) / physicalRatings.length
+      : 0;
+  const sensoryRating =
+    sensoryRatings.length > 0
+      ? sensoryRatings.reduce((a, b) => a + b, 0) / sensoryRatings.length
+      : 0;
+  const cognitiveRating =
+    cognitiveRatings.length > 0
+      ? cognitiveRatings.reduce((a, b) => a + b, 0) / cognitiveRatings.length
+      : 0;
+
+  // Calculate most common access tags
+  const tagCounts: Record<string, number> = {};
+  reviews.forEach((review) => {
+    if (review.accessTags && Array.isArray(review.accessTags)) {
+      review.accessTags.forEach((tag) => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    }
+  });
+
+  console.log("Tag counts:", tagCounts);
+
+  // Sort tags by count and get top 3
+  const commonAccessTags = Object.entries(tagCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([tag]) => tag);
+
+  // Get all unique access tags
+  const allAccessTags = Array.from(
+    new Set(reviews.flatMap((review) => review.accessTags || []))
+  );
+
+  // Update facility document with new metrics
+  const updateData = {
+    physicalRating: Number(physicalRating.toFixed(1)),
+    sensoryRating: Number(sensoryRating.toFixed(1)),
+    cognitiveRating: Number(cognitiveRating.toFixed(1)),
+    reviewCount: reviews.length,
+    commonAccessTags,
+    accessTags: allAccessTags,
+  };
+
+  console.log("Updating facility with data:", updateData);
+  await updateDoc(facilityRef, updateData);
 };

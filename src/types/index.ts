@@ -43,6 +43,12 @@ export interface Review {
   id: string;
   userId: string;
   facilityId: string;
+  facilityName: string;
+  facilityAddress: string;
+  facilityLocation: {
+    latitude: number;
+    longitude: number;
+  };
   rating: number;
   comment: string;
   physicalRating?: number;
