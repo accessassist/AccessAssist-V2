@@ -12,6 +12,7 @@ import {
   increment,
   DocumentReference,
   QuerySnapshot,
+  orderBy,
 } from "firebase/firestore";
 import { User, Facility, Review, AccessTag } from "../types";
 
@@ -332,4 +333,20 @@ export const recalculateFacilityMetrics = async (
 
   console.log("Updating facility with data:", updateData);
   await updateDoc(facilityRef, updateData);
+};
+
+export const getFacilityReviews = async (
+  facilityId: string
+): Promise<Review[]> => {
+  const reviewsQuery = query(
+    collection(db, COLLECTIONS.REVIEWS),
+    where("facilityId", "==", facilityId),
+    orderBy("createdAt", "desc")
+  );
+
+  const reviewsSnapshot = await getDocs(reviewsQuery);
+  return reviewsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Review[];
 };
