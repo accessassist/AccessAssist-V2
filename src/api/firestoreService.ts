@@ -112,15 +112,10 @@ export const addReview = async (
   const facilityRef = doc(db, COLLECTIONS.FACILITIES, facilityId);
   const reviewRef = doc(collection(db, COLLECTIONS.REVIEWS));
 
-  console.log("Adding review for facility:", facilityId);
-  console.log("Review data:", reviewData);
-
   // Check if facility exists
   const facilityDoc = await getDoc(facilityRef);
-  console.log("Facility exists:", facilityDoc.exists());
 
   if (!facilityDoc.exists()) {
-    console.log("Creating new facility with ID:", facilityId);
     // If facility doesn't exist, create it with the Google Places ID
     await setDoc(facilityRef, {
       id: facilityId,
@@ -144,7 +139,6 @@ export const addReview = async (
     facilityId,
     createdAt: new Date().toISOString(),
   };
-  console.log("Adding review with data:", reviewToAdd);
   await setDoc(reviewRef, reviewToAdd);
 
   // Get all reviews for the facility
@@ -158,18 +152,10 @@ export const addReview = async (
     ...doc.data(),
   })) as Review[];
 
-  console.log("All reviews for facility:", reviews);
-
   // Calculate new metrics
   const physicalRatings = reviews.map((r) => Number(r.physicalRating) || 0);
   const sensoryRatings = reviews.map((r) => Number(r.sensoryRating) || 0);
   const cognitiveRatings = reviews.map((r) => Number(r.cognitiveRating) || 0);
-
-  console.log("Raw ratings:", {
-    physicalRatings,
-    sensoryRatings,
-    cognitiveRatings,
-  });
 
   const physicalRating =
     physicalRatings.length > 0
@@ -184,12 +170,6 @@ export const addReview = async (
       ? cognitiveRatings.reduce((a, b) => a + b, 0) / cognitiveRatings.length
       : 0;
 
-  console.log("Calculated ratings:", {
-    physicalRating,
-    sensoryRating,
-    cognitiveRating,
-  });
-
   // Calculate most common access tags
   const tagCounts: Record<string, number> = {};
   reviews.forEach((review) => {
@@ -199,8 +179,6 @@ export const addReview = async (
       });
     }
   });
-
-  console.log("Tag counts:", tagCounts);
 
   // Sort tags by count and get top 3
   const commonAccessTags = Object.entries(tagCounts)
@@ -213,11 +191,6 @@ export const addReview = async (
     new Set(reviews.flatMap((review) => review.accessTags || []))
   );
 
-  console.log("Calculated tags:", {
-    commonAccessTags,
-    allAccessTags,
-  });
-
   // Update facility document with new metrics
   const updateData = {
     physicalRating: Number(physicalRating.toFixed(1)),
@@ -227,7 +200,6 @@ export const addReview = async (
     commonAccessTags,
     accessTags: allAccessTags,
   };
-  console.log("Updating facility with data:", updateData);
   await updateDoc(facilityRef, updateData);
 
   return reviewRef;
@@ -235,11 +207,27 @@ export const addReview = async (
 
 // Access Tags Functions
 export const getAccessTags = async (): Promise<AccessTag[]> => {
-  const tagsSnapshot = await getDocs(collection(db, COLLECTIONS.ACCESS_TAGS));
-  return tagsSnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<AccessTag, "id">),
-  }));
+  try {
+    const tagsSnapshot = await getDocs(collection(db, COLLECTIONS.ACCESS_TAGS));
+    const tags = tagsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<AccessTag, "id">),
+    }));
+    return tags;
+  } catch (error) {
+    console.error("Error in getAccessTags:", error);
+    throw error;
+  }
+};
+
+export const addAccessTag = async (
+  tagData: Omit<AccessTag, "id">
+): Promise<void> => {
+  const tagRef = doc(collection(db, COLLECTIONS.ACCESS_TAGS));
+  await setDoc(tagRef, {
+    ...tagData,
+    id: tagRef.id,
+  });
 };
 
 // Search Functions
@@ -271,19 +259,10 @@ export const recalculateFacilityMetrics = async (
     ...doc.data(),
   })) as Review[];
 
-  console.log("Recalculating metrics for facility:", facilityId);
-  console.log("Found reviews:", reviews);
-
   // Calculate new metrics
   const physicalRatings = reviews.map((r) => Number(r.physicalRating) || 0);
   const sensoryRatings = reviews.map((r) => Number(r.sensoryRating) || 0);
   const cognitiveRatings = reviews.map((r) => Number(r.cognitiveRating) || 0);
-
-  console.log("Raw ratings:", {
-    physicalRatings,
-    sensoryRatings,
-    cognitiveRatings,
-  });
 
   const physicalRating =
     physicalRatings.length > 0
@@ -308,8 +287,6 @@ export const recalculateFacilityMetrics = async (
     }
   });
 
-  console.log("Tag counts:", tagCounts);
-
   // Sort tags by count and get top 3
   const commonAccessTags = Object.entries(tagCounts)
     .sort(([, a], [, b]) => b - a)
@@ -331,7 +308,6 @@ export const recalculateFacilityMetrics = async (
     accessTags: allAccessTags,
   };
 
-  console.log("Updating facility with data:", updateData);
   await updateDoc(facilityRef, updateData);
 };
 

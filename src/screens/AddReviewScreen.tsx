@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,22 +13,10 @@ import { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../contexts/AuthContext";
 import StarRating from "../components/StarRating";
 import { addReview } from "../api/firestoreService";
-import { Facility } from "../types";
+import { getAccessTags } from "../api/firestoreService";
+import { AccessTag } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddReview">;
-
-const SAMPLE_ACCESS_TAGS = [
-  "Wheelchair Accessible",
-  "Braille Signage",
-  "Quiet Space",
-  "Elevator",
-  "Accessible Parking",
-  "Visual Alerts",
-  "Hearing Loop",
-  "Service Animals Welcome",
-  "Step-free Access",
-  "Wide Doorways",
-];
 
 const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { facilityId, place } = route.params;
@@ -38,6 +26,26 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [cognitiveRating, setCognitiveRating] = useState(0);
   const [comment, setComment] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [accessTags, setAccessTags] = useState<AccessTag[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<
+    "physical" | "sensory" | "cognitive" | null
+  >(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAccessTags = async () => {
+      try {
+        const tags = await getAccessTags();
+        setAccessTags(tags);
+      } catch (error) {
+        console.error("Error loading access tags:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAccessTags();
+  }, []);
 
   const handleTagPress = (tag: string) => {
     setSelectedTags((prevTags) =>
@@ -53,40 +61,29 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
 
-    if (physicalRating === 0 && sensoryRating === 0 && cognitiveRating === 0) {
-      Alert.alert("Error", "Please provide at least one rating");
+    if (physicalRating === 0 || sensoryRating === 0 || cognitiveRating === 0) {
+      Alert.alert("Error", "Please rate all accessibility categories");
       return;
     }
 
     try {
-      console.log("Submitting review with data:", {
+      const reviewData = {
         userId: user.id,
         facilityId,
         facilityName: place.name,
         facilityAddress: place.address,
         facilityLocation: place.location,
-        physicalRating,
-        sensoryRating,
-        cognitiveRating,
-        comment,
-        accessTags: selectedTags,
-      });
-
-      await addReview(facilityId, {
-        userId: user.id,
-        facilityId,
-        facilityName: place.name,
-        facilityAddress: place.address,
-        facilityLocation: place.location,
+        rating: (physicalRating + sensoryRating + cognitiveRating) / 3,
         physicalRating,
         sensoryRating,
         cognitiveRating,
         comment,
         accessTags: selectedTags,
         createdAt: new Date().toISOString(),
-      });
+      };
 
-      Alert.alert("Success", "Review submitted successfully", [
+      await addReview(facilityId, reviewData);
+      Alert.alert("Success", "Review submitted successfully!", [
         {
           text: "OK",
           onPress: () => navigation.goBack(),
@@ -97,6 +94,18 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
       Alert.alert("Error", "Failed to submit review. Please try again.");
     }
   };
+
+  const filteredTags = selectedCategory
+    ? accessTags.filter((tag) => tag.category === selectedCategory)
+    : [];
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -131,37 +140,93 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <Text style={styles.sectionTitle}>Access Features</Text>
-        <View style={styles.tagsContainer}>
-          {SAMPLE_ACCESS_TAGS.map((tag) => (
-            <TouchableOpacity
-              key={tag}
+
+        <View style={styles.categoryButtons}>
+          <TouchableOpacity
+            style={[
+              styles.categoryButton,
+              selectedCategory === "physical" && styles.selectedCategoryButton,
+            ]}
+            onPress={() => setSelectedCategory("physical")}
+          >
+            <Text
               style={[
-                styles.tag,
-                selectedTags.includes(tag) && styles.selectedTag,
+                styles.categoryButtonText,
+                selectedCategory === "physical" &&
+                  styles.selectedCategoryButtonText,
               ]}
-              onPress={() => handleTagPress(tag)}
             >
-              <Text
-                style={[
-                  styles.tagText,
-                  selectedTags.includes(tag) && styles.selectedTagText,
-                ]}
-              >
-                {tag}
-              </Text>
-            </TouchableOpacity>
-          ))}
+              Physical
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.categoryButton,
+              selectedCategory === "sensory" && styles.selectedCategoryButton,
+            ]}
+            onPress={() => setSelectedCategory("sensory")}
+          >
+            <Text
+              style={[
+                styles.categoryButtonText,
+                selectedCategory === "sensory" &&
+                  styles.selectedCategoryButtonText,
+              ]}
+            >
+              Sensory
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.categoryButton,
+              selectedCategory === "cognitive" && styles.selectedCategoryButton,
+            ]}
+            onPress={() => setSelectedCategory("cognitive")}
+          >
+            <Text
+              style={[
+                styles.categoryButtonText,
+                selectedCategory === "cognitive" &&
+                  styles.selectedCategoryButtonText,
+              ]}
+            >
+              Cognitive
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {selectedCategory && (
+          <View style={styles.tagsContainer}>
+            {filteredTags.map((tag) => (
+              <TouchableOpacity
+                key={tag.id}
+                style={[
+                  styles.tag,
+                  selectedTags.includes(tag.name) && styles.selectedTag,
+                ]}
+                onPress={() => handleTagPress(tag.name)}
+              >
+                <Text
+                  style={[
+                    styles.tagText,
+                    selectedTags.includes(tag.name) && styles.selectedTagText,
+                  ]}
+                >
+                  {tag.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         <Text style={styles.sectionTitle}>Additional Comments</Text>
         <TextInput
           style={styles.commentInput}
-          placeholder="Share your experience..."
-          value={comment}
-          onChangeText={setComment}
           multiline
           numberOfLines={4}
-          textAlignVertical="top"
+          value={comment}
+          onChangeText={setComment}
+          placeholder="Share your experience..."
         />
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
@@ -175,29 +240,50 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#fff",
   },
   content: {
-    padding: 16,
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    marginTop: 16,
-    marginBottom: 12,
+    fontWeight: "bold",
+    marginBottom: 16,
   },
   ratingSection: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   ratingLabel: {
     fontSize: 16,
     marginBottom: 8,
+  },
+  categoryButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  categoryButton: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    marginHorizontal: 4,
+    alignItems: "center",
+  },
+  selectedCategoryButton: {
+    backgroundColor: "#0066cc",
+  },
+  categoryButtonText: {
+    fontSize: 14,
     color: "#333",
+  },
+  selectedCategoryButtonText: {
+    color: "#fff",
   },
   tagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 16,
+    marginBottom: 24,
   },
   tag: {
     backgroundColor: "#e8f4fd",
@@ -215,16 +301,16 @@ const styles = StyleSheet.create({
     color: "#0066cc",
   },
   selectedTagText: {
-    color: "white",
+    color: "#fff",
   },
   commentInput: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 12,
-    height: 100,
     borderWidth: 1,
     borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 24,
+    minHeight: 100,
+    textAlignVertical: "top",
   },
   submitButton: {
     backgroundColor: "#0066cc",
@@ -233,9 +319,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitButtonText: {
-    color: "white",
+    color: "#fff",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "bold",
   },
 });
 
