@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
   ActivityIndicator,
   Alert,
 } from "react-native";
@@ -13,7 +14,7 @@ import { RootStackParamList } from "../navigation/types";
 import { Review, User, Facility } from "../types";
 import StarRating from "../components/StarRating";
 import ReviewItem from "../components/ReviewItem";
-import { getFacilityReviews } from "../api/firestoreService";
+import { getFacilityReviews, getFacility } from "../api/firestoreService";
 import { useAuth } from "../contexts/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -32,21 +33,11 @@ const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
   const loadPlaceData = async () => {
     try {
       setLoading(true);
-      // Fetch updated place data
-      const facilityRef = doc(db, "facilities", place.id);
-      const facilityDoc = await getDoc(facilityRef);
-      if (facilityDoc.exists()) {
-        const updatedPlace = {
-          id: facilityDoc.id,
-          ...facilityDoc.data(),
-        } as Facility;
-        console.log("Updated place data:", updatedPlace);
+      const updatedPlace = await getFacility(place.id);
+      if (updatedPlace) {
         setPlace(updatedPlace);
       }
-
-      // Fetch reviews
       const fetchedReviews = await getFacilityReviews(place.id);
-      console.log("Fetched reviews:", fetchedReviews);
       setReviews(fetchedReviews);
     } catch (error) {
       console.error("Error loading place data:", error);
