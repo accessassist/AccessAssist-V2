@@ -60,7 +60,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       refreshSearchResults();
-    }, [])
+    }, [lastSearchQuery])
   );
 
   useEffect(() => {
