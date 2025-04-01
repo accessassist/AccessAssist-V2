@@ -1,6 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from "react-native";
-import { useAuth } from "../context/AuthContext";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
+import { useAuth } from "../contexts/AuthContext";
 import { CompositeScreenProps } from "@react-navigation/native";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -18,7 +25,9 @@ const DEFAULT_PROFILE_PIC =
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout, updateUserProfile } = useAuth();
-  const [profilePic, setProfilePic] = useState(user?.photoURL || DEFAULT_PROFILE_PIC);
+  const [profilePic, setProfilePic] = useState(
+    user?.photoURL || DEFAULT_PROFILE_PIC
+  );
 
   const handleLogout = async () => {
     try {
@@ -29,9 +38,13 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleChangePhoto = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Please allow access to your photo library");
+      Alert.alert(
+        "Permission Required",
+        "Please allow access to your photo library"
+      );
       return;
     }
 
