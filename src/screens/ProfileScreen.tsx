@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  TextInput
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { CompositeScreenProps } from "@react-navigation/native";
@@ -25,39 +26,66 @@ const DEFAULT_PROFILE_PIC =
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout, updateUserProfile } = useAuth();
-  const [profilePic, setProfilePic] = useState(
-    user?.photoURL || DEFAULT_PROFILE_PIC
-  );
+  const [profilePic, setProfilePic] = useState(user?.photoURL || DEFAULT_PROFILE_PIC);
+  const [isEditing, setIsEditing] = useState(false);
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
 
   const handleLogout = async () => {
     try {
       await logout();
+      navigation.navigate('Login');
     } catch (error) {
       console.error("Error logging out:", error);
+      Alert.alert(
+        "Logout Error",
+        "There was an error logging out. Please try again."
+      );
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      await updateUserProfile({
+        firstName,
+        lastName,
+        photoURL: profilePic
+      });
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
 
   const handleChangePhoto = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert(
-        "Permission Required",
-        "Please allow access to your photo library"
-      );
-      return;
-    }
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert("Permission Required", "Please allow access to your photo library");
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      setProfilePic(result.assets[0].uri);
-      await updateUserProfile({ photoURL: result.assets[0].uri });
+      if (!result.canceled && result.assets[0]) {
+        try {
+          await updateUserProfile({ photoURL: result.assets[0].uri });
+          setProfilePic(result.assets[0].uri);
+        } catch (error) {
+          console.error('Error updating profile photo:', error);
+          Alert.alert("Update Failed", "Failed to update profile photo. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error('Error in photo picker:', error);
+      Alert.alert("Error", "There was an error accessing the photo library. Please try again.");
     }
   };
 
@@ -65,6 +93,14 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
+        <TouchableOpacity 
+          style={styles.editButton} 
+          onPress={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
+        >
+          <Text style={styles.editButtonText}>
+            {isEditing ? 'Save' : 'Edit'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.profileContainer}>
@@ -76,16 +112,38 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           </View>
         </TouchableOpacity>
-        <Text style={styles.userName}>
-          {user?.firstName} {user?.lastName}
-        </Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
+
+        {isEditing ? (
+          <View style={styles.editForm}>
+            <TextInput
+              style={styles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="First Name"
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Last Name"
+              placeholderTextColor="#999"
+            />
+          </View>
+        ) : (
+          <>
+            <Text style={styles.userName}>
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+          </>
+        )}
       </View>
 
       <View style={styles.content}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#007bff" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Ionicons name="log-out-outline" size={24} color="#fff" style={styles.logoutIcon} />
+          <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -95,66 +153,94 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+  },
+  editButton: {
+    padding: 8,
+  },
+  editButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
   },
   profileContainer: {
-    alignItems: "center",
-    marginTop: 30,
+    alignItems: 'center',
+    padding: 20,
   },
   profileImageContainer: {
-    position: "relative",
+    position: 'relative',
+    marginBottom: 16,
   },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#ccc",
   },
   editIconContainer: {
-    position: "absolute",
-    bottom: 0,
+    position: 'absolute',
     right: 0,
-    backgroundColor: "#007bff",
-    padding: 5,
-    borderRadius: 50,
+    bottom: 0,
+    backgroundColor: '#007AFF',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editForm: {
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+    color: '#000',
   },
   userName: {
-    marginTop: 15,
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   userEmail: {
     fontSize: 16,
-    color: "#777",
-    marginTop: 5,
+    color: '#666',
+    marginBottom: 16,
   },
   content: {
     flex: 1,
+    justifyContent: 'flex-end',
     padding: 20,
   },
   logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 10,
-    marginTop: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoutText: {
-    marginLeft: 10,
+  logoutIcon: {
+    marginRight: 8,
+  },
+  logoutButtonText: {
+    color: '#fff',
     fontSize: 16,
-    color: "#007bff",
+    fontWeight: 'bold',
   },
 });
 

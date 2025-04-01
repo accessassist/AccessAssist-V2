@@ -6,7 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { getUser, createUser } from "../api/firestoreService";
+import { getUser, createUser, updateUser as updateUserInFirestore } from "../api/firestoreService";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -84,8 +84,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = async (): Promise<void> => {
-    await firebaseSignOut(auth);
-    setUser(null);
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error('Firebase logout error:', error);
+      throw error;
+    }
+  };
+
+  const updateUserProfile = async (updates: Partial<User>): Promise<void> => {
+    if (!user) throw new Error("No user logged in");
+
+    try {
+      const updatedUser = { ...user, ...updates };
+      
+      // Update Firestore
+      await updateUserInFirestore(user.id, updatedUser);
+      
+      // Update local state
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
   };
 
   const value = {
@@ -93,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loading,
     login,
     logout,
+    updateUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
