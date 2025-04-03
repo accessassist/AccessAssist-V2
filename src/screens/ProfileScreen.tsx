@@ -25,24 +25,41 @@ type Props = CompositeScreenProps<
 
 type AccessTagCategory = NonNullable<AccessTag["category"]>;
 
-const ACCESS_TAG_CONFIG: { id: AccessTagCategory; icon: keyof typeof Ionicons.glyphMap }[] = [{ id: "physical", icon: "body-outline" }, { id: "sensory", icon: "eye-outline" }, { id: "cognitive", icon: "bulb-outline" }];
+const ACCESS_TAG_CONFIG: {
+  id: AccessTagCategory;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { id: "physical", icon: "body-outline" },
+  { id: "sensory", icon: "eye-outline" },
+  { id: "cognitive", icon: "bulb-outline" },
+];
 
 const DEFAULT_PROFILE_PIC =
   "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout, updateUserProfile } = useAuth();
-  const [profilePic, setProfilePic] = useState(user?.photoURL || DEFAULT_PROFILE_PIC);
+  const [profilePic, setProfilePic] = useState(
+    user?.photoURL || DEFAULT_PROFILE_PIC
+  );
   const [isEditing, setIsEditing] = useState(false);
-  const [firstName, setFirstName] = useState(user?.firstName || '');
-  const [lastName, setLastName] = useState(user?.lastName || '');
-  const [accessTags, setAccessTags] = useState<string[]>(user?.preferredAccessTags || []);
-  
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [accessTags, setAccessTags] = useState<string[]>(
+    user?.preferredAccessTags || []
+  );
+
   // Keep track of original values for comparison
-  const [originalFirstName, setOriginalFirstName] = useState(user?.firstName || '');
-  const [originalLastName, setOriginalLastName] = useState(user?.lastName || '');
+  const [originalFirstName, setOriginalFirstName] = useState(
+    user?.firstName || ""
+  );
+  const [originalLastName, setOriginalLastName] = useState(
+    user?.lastName || ""
+  );
   const [originalProfilePic] = useState(user?.photoURL || DEFAULT_PROFILE_PIC);
-  const [originalAccessTags] = useState<string[]>(user?.preferredAccessTags || []);
+  const [originalAccessTags] = useState<string[]>(
+    user?.preferredAccessTags || []
+  );
 
   const handleStartEditing = () => {
     setOriginalFirstName(firstName);
@@ -67,7 +84,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         photoURL: string;
         preferredAccessTags: string[];
       }> = {};
-      
+
       // Only include changed fields
       if (firstName !== originalFirstName) updates.firstName = firstName;
       if (lastName !== originalLastName) updates.lastName = lastName;
@@ -79,28 +96,25 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       // Only update if there are changes
       if (Object.keys(updates).length > 0) {
         await updateUserProfile(updates);
-        Alert.alert('Success', 'Profile updated successfully');
+        Alert.alert("Success", "Profile updated successfully");
       }
-      
+
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "Failed to update profile. Please try again.");
     }
   };
 
   const handleToggleTag = (tagId: string) => {
-    setAccessTags(prev => 
-      prev.includes(tagId)
-        ? prev.filter(t => t !== tagId)
-        : [...prev, tagId]
+    setAccessTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
     );
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigation.navigate('Login');
     } catch (error) {
       console.error("Error logging out:", error);
       Alert.alert(
@@ -112,9 +126,13 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleChangePhoto = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert("Permission Required", "Please allow access to your photo library");
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photo library"
+        );
         return;
       }
 
@@ -129,30 +147,37 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         setProfilePic(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error in photo picker:', error);
-      Alert.alert("Error", "There was an error accessing the photo library. Please try again.");
+      console.error("Error in photo picker:", error);
+      Alert.alert(
+        "Error",
+        "There was an error accessing the photo library. Please try again."
+      );
     }
   };
 
   const renderAccessTags = () => {
-    return ACCESS_TAG_CONFIG.map(tag => (
+    return ACCESS_TAG_CONFIG.map((tag) => (
       <TouchableOpacity
         key={tag.id}
         style={[
           styles.tagButton,
-          accessTags.includes(tag.id) && styles.tagButtonSelected
+          accessTags.includes(tag.id) && styles.tagButtonSelected,
         ]}
         onPress={() => handleToggleTag(tag.id)}
       >
-        <Ionicons 
+        <Ionicons
           name={tag.icon as keyof typeof Ionicons.glyphMap}
-          size={24} 
-          color={accessTags.includes(tag.id) ? '#fff' : '#007AFF'} 
+          size={24}
+          color={accessTags.includes(tag.id) ? "#fff" : "#007AFF"}
         />
-        <Text style={[
-          styles.tagButtonText,
-          accessTags.includes(tag.id) && styles.tagButtonTextSelected
-        ]}>{tag.id}</Text>
+        <Text
+          style={[
+            styles.tagButtonText,
+            accessTags.includes(tag.id) && styles.tagButtonTextSelected,
+          ]}
+        >
+          {tag.id}
+        </Text>
       </TouchableOpacity>
     ));
   };
@@ -163,15 +188,15 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <View style={styles.tagsContainer}>
         {user.preferredAccessTags.map((tagId) => {
-          const tagConfig = ACCESS_TAG_CONFIG.find(t => t.id === tagId);
+          const tagConfig = ACCESS_TAG_CONFIG.find((t) => t.id === tagId);
           if (!tagConfig) return null;
-          
+
           return (
             <View key={tagId} style={styles.tag}>
-              <Ionicons 
+              <Ionicons
                 name={tagConfig.icon as keyof typeof Ionicons.glyphMap}
-                size={20} 
-                color="#007AFF" 
+                size={20}
+                color="#007AFF"
                 style={styles.tagIcon}
               />
               <Text style={styles.tagText}>{tagConfig.id}</Text>
@@ -188,22 +213,24 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.title}>Profile</Text>
         {isEditing ? (
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={styles.headerButton} 
+            <TouchableOpacity
+              style={styles.headerButton}
               onPress={handleCancel}
             >
-              <Text style={[styles.headerButtonText, styles.cancelButton]}>Cancel</Text>
+              <Text style={[styles.headerButtonText, styles.cancelButton]}>
+                Cancel
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.headerButton} 
+            <TouchableOpacity
+              style={styles.headerButton}
               onPress={handleSaveProfile}
             >
               <Text style={styles.headerButtonText}>Save</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity 
-            style={styles.editButton} 
+          <TouchableOpacity
+            style={styles.editButton}
             onPress={handleStartEditing}
           >
             <Text style={styles.editButtonText}>Edit</Text>
@@ -240,9 +267,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               placeholderTextColor="#999"
             />
             <Text style={styles.sectionTitle}>Preferred Access Tags</Text>
-            <View style={styles.tagsContainer}>
-              {renderAccessTags()}
-            </View>
+            <View style={styles.tagsContainer}>{renderAccessTags()}</View>
           </View>
         ) : (
           <>
@@ -257,7 +282,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
       <View style={styles.content}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#fff" style={styles.logoutIcon} />
+          <Ionicons
+            name="log-out-outline"
+            size={24}
+            color="#fff"
+            style={styles.logoutIcon}
+          />
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -268,19 +298,19 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    borderBottomColor: "#eee",
+    backgroundColor: "#fff",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -290,8 +320,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerButton: {
     paddingVertical: 8,
@@ -299,31 +329,31 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   headerButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   cancelButton: {
-    color: '#FF3B30',
+    color: "#FF3B30",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
   },
   editButton: {
     padding: 8,
   },
   editButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
     fontSize: 16,
   },
   profileContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 20,
   },
   profileImageContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: 16,
   },
   profileImage: {
@@ -332,37 +362,37 @@ const styles = StyleSheet.create({
     borderRadius: 60,
   },
   editIconContainer: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     bottom: 0,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 15,
     width: 30,
     height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   editForm: {
-    width: '100%',
+    width: "100%",
     paddingHorizontal: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   userName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   userEmail: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginBottom: 16,
   },
   content: {
@@ -371,45 +401,45 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginTop: 16,
     marginBottom: 8,
   },
   tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
     gap: 8,
     marginTop: 8,
   },
   tagButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: "#007AFF",
     marginBottom: 8,
     minWidth: 120,
   },
   tagButtonSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   tagButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
     fontSize: 16,
     marginLeft: 8,
   },
   tagButtonTextSelected: {
-    color: '#fff',
+    color: "#fff",
   },
   tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -420,23 +450,23 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: "#007AFF",
   },
   logoutButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 8,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   logoutIcon: {
     marginRight: 8,
   },
   logoutButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
