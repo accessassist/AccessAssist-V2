@@ -37,6 +37,7 @@ interface AccessTagsProps {
   userAccessTags: string[];
   filterOption: FilterOption;
   accessTagMap: Record<string, string>;
+  showAdditionalTags?: boolean;
 }
 
 const AccessTags: React.FC<AccessTagsProps> = ({
@@ -44,6 +45,7 @@ const AccessTags: React.FC<AccessTagsProps> = ({
   userAccessTags,
   filterOption,
   accessTagMap,
+  showAdditionalTags = false,
 }) => {
   // Check if any of the tags match the user's access tags
   const hasMatchingTags =
@@ -55,9 +57,13 @@ const AccessTags: React.FC<AccessTagsProps> = ({
       return !!tagId && userAccessTags.includes(tagId);
     });
 
+  // If showAdditionalTags is true, we'll show all matching tags
+  // Otherwise, we'll only show the first 3 common tags
+  const tagsToShow = showAdditionalTags ? tags : tags.slice(0, 3);
+
   return (
     <View style={styles.accessTagsContainer}>
-      {tags.slice(0, 3).map((tag, index) => {
+      {tagsToShow.map((tag, index) => {
         const isMatchingTag =
           filterOption === "myAccessTags" &&
           userAccessTags.length > 0 &&
@@ -146,6 +152,20 @@ const PlacesList: React.FC<PlacesListProps> = ({
             `Place ${place.name} has matching tags: ${hasMatchingTags}`
           );
 
+          // Find additional matching tags that aren't in the common tags
+          const commonTags = place.commonAccessTags.slice(0, 3);
+          const additionalMatchingTags =
+            filterOption === "myAccessTags" && userAccessTags.length > 0
+              ? place.accessTags.filter((tag) => {
+                  // Check if the tag is not in the common tags
+                  const isNotCommon = !commonTags.includes(tag);
+                  // Check if the tag matches one of the user's preferred tags
+                  const tagId = accessTagMap[tag];
+                  const isMatching = !!tagId && userAccessTags.includes(tagId);
+                  return isNotCommon && isMatching;
+                })
+              : [];
+
           return (
             <TouchableOpacity
               key={place.id}
@@ -177,12 +197,31 @@ const PlacesList: React.FC<PlacesListProps> = ({
                     rating={place.cognitiveRating}
                   />
                 </View>
+
+                {/* Common Access Tags */}
                 <AccessTags
                   tags={place.commonAccessTags}
                   userAccessTags={userAccessTags}
                   filterOption={filterOption}
                   accessTagMap={accessTagMap}
                 />
+
+                {/* Additional Matching Tags */}
+                {additionalMatchingTags.length > 0 && (
+                  <View style={styles.additionalTagsContainer}>
+                    <Text style={styles.additionalTagsTitle}>
+                      Your Access Tags:
+                    </Text>
+                    <AccessTags
+                      tags={additionalMatchingTags}
+                      userAccessTags={userAccessTags}
+                      filterOption={filterOption}
+                      accessTagMap={accessTagMap}
+                      showAdditionalTags={true}
+                    />
+                  </View>
+                )}
+
                 <TouchableOpacity
                   style={styles.directionsButton}
                   onPress={() => openDirections(place)}
@@ -235,7 +274,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#eee",
+    backgroundColor: "#f0f0f0",
   },
   contentContainer: {
     flex: 1,
@@ -256,9 +295,10 @@ const styles = StyleSheet.create({
   },
   ratingTile: {
     backgroundColor: "#f0f0f0",
-    padding: 8,
     borderRadius: 4,
+    padding: 4,
     marginRight: 8,
+    minWidth: 80,
     alignItems: "center",
   },
   ratingCategory: {
@@ -269,40 +309,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
   },
-  directionsButton: {
-    backgroundColor: "#2196F3",
-    padding: 8,
-    borderRadius: 4,
-    alignItems: "center",
-    alignSelf: "flex-start",
-  },
-  directionsText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "500",
-  },
   accessTagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: 8,
   },
-  accessTag: {
-    backgroundColor: "#e8f4fd",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginRight: 4,
+  additionalTagsContainer: {
+    marginBottom: 8,
+  },
+  additionalTagsTitle: {
+    fontSize: 14,
+    fontWeight: "500",
     marginBottom: 4,
+    color: "#007AFF",
+  },
+  accessTag: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
   },
   matchingAccessTag: {
     backgroundColor: "#4CAF50", // Green background for matching tags
   },
   accessTagText: {
-    fontSize: 10,
-    color: "#0066cc",
+    fontSize: 12,
+    color: "#333",
   },
   matchingAccessTagText: {
-    color: "white", // White text for matching tags
+    color: "white",
+  },
+  directionsButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    padding: 8,
+    alignItems: "center",
+  },
+  directionsText: {
+    color: "white",
+    fontWeight: "500",
   },
 });
 
