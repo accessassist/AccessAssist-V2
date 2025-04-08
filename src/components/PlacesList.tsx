@@ -11,9 +11,13 @@ import {
 } from "react-native";
 import { Facility, AccessTag } from "../types";
 
+type FilterOption = "none" | "myAccessTags" | "selectAccessTag";
+
 interface PlacesListProps {
   places: Facility[];
   onPlaceSelect: (place: Facility) => void;
+  filterOption: FilterOption;
+  userAccessTags: string[];
 }
 
 interface RatingTileProps {
@@ -30,19 +34,54 @@ const RatingTile: React.FC<RatingTileProps> = ({ category, rating }) => (
 
 interface AccessTagsProps {
   tags: string[];
+  userAccessTags: string[];
+  filterOption: FilterOption;
 }
 
-const AccessTags: React.FC<AccessTagsProps> = ({ tags }) => (
-  <View style={styles.accessTagsContainer}>
-    {tags.slice(0, 3).map((tag, index) => (
-      <View key={index} style={styles.accessTag}>
-        <Text style={styles.accessTagText}>{tag}</Text>
-      </View>
-    ))}
-  </View>
-);
+const AccessTags: React.FC<AccessTagsProps> = ({
+  tags,
+  userAccessTags,
+  filterOption,
+}) => {
+  // Check if any of the tags match the user's access tags
+  const hasMatchingTags =
+    filterOption === "myAccessTags" &&
+    tags.some((tag) => userAccessTags.includes(tag));
 
-const PlacesList: React.FC<PlacesListProps> = ({ places, onPlaceSelect }) => {
+  return (
+    <View style={styles.accessTagsContainer}>
+      {tags.slice(0, 3).map((tag, index) => {
+        const isMatchingTag =
+          filterOption === "myAccessTags" && userAccessTags.includes(tag);
+        return (
+          <View
+            key={index}
+            style={[
+              styles.accessTag,
+              isMatchingTag && styles.matchingAccessTag,
+            ]}
+          >
+            <Text
+              style={[
+                styles.accessTagText,
+                isMatchingTag && styles.matchingAccessTagText,
+              ]}
+            >
+              {tag}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+const PlacesList: React.FC<PlacesListProps> = ({
+  places,
+  onPlaceSelect,
+  filterOption,
+  userAccessTags,
+}) => {
   const openDirections = async (place: Facility) => {
     const scheme = Platform.select({
       ios: "maps://0,0?q=",
@@ -60,47 +99,73 @@ const PlacesList: React.FC<PlacesListProps> = ({ places, onPlaceSelect }) => {
     }
   };
 
+  // Filter places based on the selected filter option
+  const filteredPlaces = places.filter((place) => {
+    if (filterOption === "none") return true;
+
+    if (filterOption === "myAccessTags") {
+      // Check if the place has any of the user's preferred access tags
+      return place.accessTags.some((tag) => userAccessTags.includes(tag));
+    }
+
+    return true; // For "selectAccessTag" option, we'll handle it later
+  });
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        {places.map((place) => (
-          <TouchableOpacity
-            key={place.id}
-            style={styles.card}
-            onPress={() => onPlaceSelect(place)}
-          >
-            <View style={styles.imageContainer}>
-              {place.photo ? (
-                <Image
-                  source={{ uri: place.photo }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.imagePlaceholder} />
-              )}
-            </View>
-            <View style={styles.contentContainer}>
-              <Text style={styles.name}>{place.name}</Text>
-              <Text style={styles.address}>{place.address}</Text>
-              <View style={styles.ratingsContainer}>
-                <RatingTile category="Physical" rating={place.physicalRating} />
-                <RatingTile category="Sensory" rating={place.sensoryRating} />
-                <RatingTile
-                  category="Cognitive"
-                  rating={place.cognitiveRating}
-                />
+        {filteredPlaces.map((place) => {
+          // Check if this place has matching access tags
+          const hasMatchingTags =
+            filterOption === "myAccessTags" &&
+            place.accessTags.some((tag) => userAccessTags.includes(tag));
+
+          return (
+            <TouchableOpacity
+              key={place.id}
+              style={[styles.card, hasMatchingTags && styles.matchingCard]}
+              onPress={() => onPlaceSelect(place)}
+            >
+              <View style={styles.imageContainer}>
+                {place.photo ? (
+                  <Image
+                    source={{ uri: place.photo }}
+                    style={styles.image}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder} />
+                )}
               </View>
-              <AccessTags tags={place.commonAccessTags} />
-              <TouchableOpacity
-                style={styles.directionsButton}
-                onPress={() => openDirections(place)}
-              >
-                <Text style={styles.directionsText}>Directions</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View style={styles.contentContainer}>
+                <Text style={styles.name}>{place.name}</Text>
+                <Text style={styles.address}>{place.address}</Text>
+                <View style={styles.ratingsContainer}>
+                  <RatingTile
+                    category="Physical"
+                    rating={place.physicalRating}
+                  />
+                  <RatingTile category="Sensory" rating={place.sensoryRating} />
+                  <RatingTile
+                    category="Cognitive"
+                    rating={place.cognitiveRating}
+                  />
+                </View>
+                <AccessTags
+                  tags={place.commonAccessTags}
+                  userAccessTags={userAccessTags}
+                  filterOption={filterOption}
+                />
+                <TouchableOpacity
+                  style={styles.directionsButton}
+                  onPress={() => openDirections(place)}
+                >
+                  <Text style={styles.directionsText}>Directions</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -125,6 +190,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+  },
+  matchingCard: {
+    backgroundColor: "#e6ffe6", // Light green background for matching cards
   },
   imageContainer: {
     width: 80,
@@ -199,9 +267,15 @@ const styles = StyleSheet.create({
     marginRight: 4,
     marginBottom: 4,
   },
+  matchingAccessTag: {
+    backgroundColor: "#4CAF50", // Green background for matching tags
+  },
   accessTagText: {
     fontSize: 10,
     color: "#0066cc",
+  },
+  matchingAccessTagText: {
+    color: "white", // White text for matching tags
   },
 });
 
