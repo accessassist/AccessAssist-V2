@@ -178,14 +178,24 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* Results List */}
       {showResults && (
-        <PlacesList
-          places={searchResults}
-          onPlaceSelect={(place: Facility) =>
-            navigation.navigate("Place", { place })
-          }
-          filterOption={filterOption}
-          userAccessTags={user?.preferredAccessTags || []}
-        />
+        <>
+          {(() => {
+            console.log("User in HomeScreen:", user);
+            console.log(
+              "User access tags in HomeScreen:",
+              user?.preferredAccessTags
+            );
+            return null;
+          })()}
+          <PlacesList
+            places={searchResults}
+            onPlaceSelect={(place: Facility) =>
+              navigation.navigate("Place", { place })
+            }
+            filterOption={filterOption}
+            userAccessTags={user?.preferredAccessTags || []}
+          />
+        </>
       )}
 
       {/* Modal */}

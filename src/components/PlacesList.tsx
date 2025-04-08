@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -36,23 +36,33 @@ interface AccessTagsProps {
   tags: string[];
   userAccessTags: string[];
   filterOption: FilterOption;
+  accessTagMap: Record<string, string>;
 }
 
 const AccessTags: React.FC<AccessTagsProps> = ({
   tags,
   userAccessTags,
   filterOption,
+  accessTagMap,
 }) => {
   // Check if any of the tags match the user's access tags
   const hasMatchingTags =
     filterOption === "myAccessTags" &&
-    tags.some((tag) => userAccessTags.includes(tag));
+    userAccessTags.length > 0 &&
+    tags.some((tagName) => {
+      // Check if the tag name exists in our mapping
+      const tagId = accessTagMap[tagName];
+      return !!tagId && userAccessTags.includes(tagId);
+    });
 
   return (
     <View style={styles.accessTagsContainer}>
       {tags.slice(0, 3).map((tag, index) => {
         const isMatchingTag =
-          filterOption === "myAccessTags" && userAccessTags.includes(tag);
+          filterOption === "myAccessTags" &&
+          userAccessTags.length > 0 &&
+          !!accessTagMap[tag] &&
+          userAccessTags.includes(accessTagMap[tag]);
         return (
           <View
             key={index}
@@ -82,6 +92,13 @@ const PlacesList: React.FC<PlacesListProps> = ({
   filterOption,
   userAccessTags,
 }) => {
+  // Instead of fetching from Firestore, we'll use a hardcoded mapping
+  // This is a temporary solution until proper permissions are set up
+  const accessTagMap: Record<string, string> = {
+    "Curb Ramp": "mKZfbDAhQroYDgl3s8sG",
+    // Add more mappings as needed
+  };
+
   const openDirections = async (place: Facility) => {
     const scheme = Platform.select({
       ios: "maps://0,0?q=",
@@ -99,26 +116,35 @@ const PlacesList: React.FC<PlacesListProps> = ({
     }
   };
 
-  // Filter places based on the selected filter option
-  const filteredPlaces = places.filter((place) => {
-    if (filterOption === "none") return true;
+  // Debug: Log the user's access tags
+  console.log("User access tags:", userAccessTags);
+  console.log("Filter option:", filterOption);
+  console.log("Access tag mapping:", accessTagMap);
 
-    if (filterOption === "myAccessTags") {
-      // Check if the place has any of the user's preferred access tags
-      return place.accessTags.some((tag) => userAccessTags.includes(tag));
-    }
-
-    return true; // For "selectAccessTag" option, we'll handle it later
-  });
-
+  // We don't filter the places anymore, we just highlight matching ones
+  // This ensures the order remains the same as the original search results
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        {filteredPlaces.map((place) => {
+        {places.map((place) => {
+          // Debug: Log the place's access tags
+          console.log(`Place ${place.name} access tags:`, place.accessTags);
+
           // Check if this place has matching access tags
           const hasMatchingTags =
             filterOption === "myAccessTags" &&
-            place.accessTags.some((tag) => userAccessTags.includes(tag));
+            userAccessTags.length > 0 &&
+            place.accessTags.some((tagName) => {
+              // Check if the tag name exists in our mapping
+              const tagId = accessTagMap[tagName];
+              const isMatch = !!tagId && userAccessTags.includes(tagId);
+              console.log(`Checking tag ${tagName}: ${isMatch} (ID: ${tagId})`);
+              return isMatch;
+            });
+
+          console.log(
+            `Place ${place.name} has matching tags: ${hasMatchingTags}`
+          );
 
           return (
             <TouchableOpacity
@@ -155,6 +181,7 @@ const PlacesList: React.FC<PlacesListProps> = ({
                   tags={place.commonAccessTags}
                   userAccessTags={userAccessTags}
                   filterOption={filterOption}
+                  accessTagMap={accessTagMap}
                 />
                 <TouchableOpacity
                   style={styles.directionsButton}
