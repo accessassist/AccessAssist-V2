@@ -28,17 +28,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    right: 20,
-    zIndex: 1,
+    width: "100%",
   },
   input: {
     height: 50,
     backgroundColor: "white",
     borderRadius: 25,
     paddingHorizontal: 20,
+    marginHorizontal: 0,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,

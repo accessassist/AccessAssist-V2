@@ -74,6 +74,14 @@ export const searchPlaces = async (
             commonAccessTags: facilityData.commonAccessTags,
             accessTags: facilityData.accessTags,
           });
+          console.log(
+            `Facility ${facilityData.name} access tags:`,
+            facilityData.accessTags
+          );
+          console.log(
+            `Facility ${facilityData.name} common access tags:`,
+            facilityData.commonAccessTags
+          );
         }
 
         if (facilityDoc.exists()) {

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ColorValue,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -15,8 +16,15 @@ import StarRating from "../components/StarRating";
 import { addReview } from "../api/firestoreService";
 import { getAccessTags } from "../api/firestoreService";
 import { AccessTag } from "../types";
+import { Colors } from "../constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddReview">;
+
+interface CategoryButtonStyle {
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+}
 
 const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { facilityId, place } = route.params;
@@ -28,7 +36,7 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [accessTags, setAccessTags] = useState<AccessTag[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<
-    "physical" | "sensory" | "cognitive" | null
+    "Physical" | "Sensory" | "Cognitive" | null
   >(null);
   const [loading, setLoading] = useState(true);
 
@@ -96,8 +104,34 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const filteredTags = selectedCategory
-    ? accessTags.filter((tag) => tag.category === selectedCategory)
+    ? accessTags.filter(
+        (tag) => tag.category?.toLowerCase() === selectedCategory.toLowerCase()
+      )
     : [];
+
+  const getCategoryColor = (category: "Physical" | "Sensory" | "Cognitive") => {
+    switch (category) {
+      case "Physical":
+        return Colors.categories.physical.main;
+      case "Sensory":
+        return Colors.categories.sensory.main;
+      case "Cognitive":
+        return Colors.categories.cognitive.main;
+    }
+  };
+
+  const getCategoryLightColor = (
+    category: "Physical" | "Sensory" | "Cognitive"
+  ) => {
+    switch (category) {
+      case "Physical":
+        return Colors.categories.physical.light;
+      case "Sensory":
+        return Colors.categories.sensory.light;
+      case "Cognitive":
+        return Colors.categories.cognitive.light;
+    }
+  };
 
   if (loading) {
     return (
@@ -113,86 +147,87 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         <Text style={styles.sectionTitle}>Accessibility Ratings</Text>
 
         <View style={styles.ratingSection}>
-          <Text style={styles.ratingLabel}>Physical Accessibility</Text>
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.physical.main },
+            ]}
+          >
+            Physical Accessibility
+          </Text>
           <StarRating
             rating={physicalRating}
-            size={32}
             onRatingChange={setPhysicalRating}
+            size={30}
+            color={Colors.categories.physical.main}
           />
         </View>
 
         <View style={styles.ratingSection}>
-          <Text style={styles.ratingLabel}>Sensory Accessibility</Text>
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.sensory.main },
+            ]}
+          >
+            Sensory Accessibility
+          </Text>
           <StarRating
             rating={sensoryRating}
-            size={32}
             onRatingChange={setSensoryRating}
+            size={30}
+            color={Colors.categories.sensory.main}
           />
         </View>
 
         <View style={styles.ratingSection}>
-          <Text style={styles.ratingLabel}>Cognitive Accessibility</Text>
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.cognitive.main },
+            ]}
+          >
+            Cognitive Accessibility
+          </Text>
           <StarRating
             rating={cognitiveRating}
-            size={32}
             onRatingChange={setCognitiveRating}
+            size={30}
+            color={Colors.categories.cognitive.main}
           />
         </View>
 
         <Text style={styles.sectionTitle}>Access Features</Text>
 
         <View style={styles.categoryButtons}>
-          <TouchableOpacity
-            style={[
-              styles.categoryButton,
-              selectedCategory === "physical" && styles.selectedCategoryButton,
-            ]}
-            onPress={() => setSelectedCategory("physical")}
-          >
-            <Text
+          {(["Physical", "Sensory", "Cognitive"] as const).map((category) => (
+            <TouchableOpacity
+              key={category}
               style={[
-                styles.categoryButtonText,
-                selectedCategory === "physical" &&
-                  styles.selectedCategoryButtonText,
+                styles.categoryButton,
+                selectedCategory === category && {
+                  backgroundColor: getCategoryColor(category),
+                  borderColor: getCategoryColor(category),
+                  borderWidth: 1,
+                },
               ]}
+              onPress={() => setSelectedCategory(category)}
             >
-              Physical
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.categoryButton,
-              selectedCategory === "sensory" && styles.selectedCategoryButton,
-            ]}
-            onPress={() => setSelectedCategory("sensory")}
-          >
-            <Text
-              style={[
-                styles.categoryButtonText,
-                selectedCategory === "sensory" &&
-                  styles.selectedCategoryButtonText,
-              ]}
-            >
-              Sensory
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.categoryButton,
-              selectedCategory === "cognitive" && styles.selectedCategoryButton,
-            ]}
-            onPress={() => setSelectedCategory("cognitive")}
-          >
-            <Text
-              style={[
-                styles.categoryButtonText,
-                selectedCategory === "cognitive" &&
-                  styles.selectedCategoryButtonText,
-              ]}
-            >
-              Cognitive
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.categoryButtonText,
+                  {
+                    color:
+                      selectedCategory === category
+                        ? Colors.text.light
+                        : getCategoryColor(category),
+                  },
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {selectedCategory && (
@@ -201,15 +236,25 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity
                 key={tag.id}
                 style={[
-                  styles.tag,
-                  selectedTags.includes(tag.name) && styles.selectedTag,
+                  styles.selectedTag,
+                  {
+                    backgroundColor: selectedTags.includes(tag.name)
+                      ? getCategoryColor(selectedCategory)
+                      : Colors.background.card,
+                    borderColor: getCategoryColor(selectedCategory),
+                    borderWidth: 1,
+                  },
                 ]}
                 onPress={() => handleTagPress(tag.name)}
               >
                 <Text
                   style={[
-                    styles.tagText,
-                    selectedTags.includes(tag.name) && styles.selectedTagText,
+                    styles.selectedTagText,
+                    {
+                      color: selectedTags.includes(tag.name)
+                        ? Colors.text.light
+                        : getCategoryColor(selectedCategory),
+                    },
                   ]}
                 >
                   {tag.name}
@@ -240,15 +285,16 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.background.app,
   },
   content: {
-    padding: 20,
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 16,
+    color: Colors.text.primary,
   },
   ratingSection: {
     marginBottom: 24,
@@ -256,6 +302,7 @@ const styles = StyleSheet.create({
   ratingLabel: {
     fontSize: 16,
     marginBottom: 8,
+    color: Colors.text.primary,
   },
   categoryButtons: {
     flexDirection: "row",
@@ -263,65 +310,67 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   categoryButton: {
-    flex: 1,
-    padding: 12,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    marginHorizontal: 4,
-    alignItems: "center",
-  },
-  selectedCategoryButton: {
-    backgroundColor: "#0066cc",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: Colors.background.divider,
+    backgroundColor: Colors.background.card,
   },
   categoryButtonText: {
     fontSize: 14,
-    color: "#333",
+    fontWeight: "600",
   },
-  selectedCategoryButtonText: {
-    color: "#fff",
+  selectedTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  selectedTagText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  removeTagButton: {
+    padding: 2,
+  },
+  removeTagText: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
   tagsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: 24,
   },
-  tag: {
-    backgroundColor: "#e8f4fd",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  selectedTag: {
-    backgroundColor: "#0066cc",
-  },
-  tagText: {
-    fontSize: 14,
-    color: "#0066cc",
-  },
-  selectedTagText: {
-    color: "#fff",
-  },
   commentInput: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 24,
     minHeight: 100,
     textAlignVertical: "top",
+    color: Colors.text.primary,
   },
   submitButton: {
-    backgroundColor: "#0066cc",
-    padding: 16,
-    borderRadius: 8,
+    backgroundColor: Colors.button.primary.background,
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 20,
     alignItems: "center",
   },
   submitButtonText: {
-    color: "#fff",
+    color: Colors.text.light,
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
 });
 
