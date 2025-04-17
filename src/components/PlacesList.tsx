@@ -10,6 +10,8 @@ import {
   Platform,
 } from "react-native";
 import { Facility, AccessTag } from "../types";
+import { Colors } from "../constants/colors";
+import { getTagColor } from "../utils/tagCategoryMapping";
 
 type FilterOption = "none" | "myAccessTags" | "selectAccessTag";
 
@@ -25,12 +27,29 @@ interface RatingTileProps {
   rating: number;
 }
 
-const RatingTile: React.FC<RatingTileProps> = ({ category, rating }) => (
-  <View style={styles.ratingTile}>
-    <Text style={styles.ratingCategory}>{category}</Text>
-    <Text style={styles.ratingValue}>{rating.toFixed(1)}</Text>
-  </View>
-);
+const RatingTile: React.FC<RatingTileProps> = ({ category, rating }) => {
+  // Determine the color based on the category
+  let categoryColor = Colors.text.primary;
+  if (category === "Physical") {
+    categoryColor = Colors.categories.physical.main;
+  } else if (category === "Sensory") {
+    categoryColor = Colors.categories.sensory.main;
+  } else if (category === "Cognitive") {
+    categoryColor = Colors.categories.cognitive.main;
+  }
+
+  return (
+    <View style={[styles.ratingTile, { backgroundColor: categoryColor }]}>
+      <Text style={[styles.ratingText, { color: Colors.text.light }]}>
+        {category}
+      </Text>
+      <Text style={[styles.ratingValue, { color: Colors.text.light }]}>
+        {" "}
+        {rating.toFixed(1)}
+      </Text>
+    </View>
+  );
+};
 
 interface AccessTagsProps {
   tags: string[];
@@ -69,18 +88,28 @@ const AccessTags: React.FC<AccessTagsProps> = ({
           userAccessTags.length > 0 &&
           !!accessTagMap[tag] &&
           userAccessTags.includes(accessTagMap[tag]);
+
+        // Get the color based on the tag's category
+        const categoryColor = getTagColor(tag);
+
         return (
           <View
             key={index}
             style={[
               styles.accessTag,
               isMatchingTag && styles.matchingAccessTag,
+              {
+                backgroundColor: Colors.background.card,
+                borderColor: categoryColor,
+                borderWidth: 1,
+              },
             ]}
           >
             <Text
               style={[
                 styles.accessTagText,
                 isMatchingTag && styles.matchingAccessTagText,
+                { color: categoryColor },
               ]}
             >
               {tag}
@@ -244,7 +273,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: "50%",
-    backgroundColor: "white",
+    backgroundColor: Colors.background.app,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -255,10 +284,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: Colors.background.divider,
+    backgroundColor: Colors.background.card,
   },
   matchingCard: {
-    backgroundColor: "#e6ffe6", // Light green background for matching cards
+    backgroundColor: Colors.background.list,
   },
   imageContainer: {
     width: 80,
@@ -274,7 +304,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.background.list,
   },
   contentContainer: {
     flex: 1,
@@ -283,10 +313,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
+    color: Colors.text.primary,
   },
   address: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.text.secondary,
     marginBottom: 8,
   },
   ratingsContainer: {
@@ -294,16 +325,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   ratingTile: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 4,
-    padding: 4,
+    padding: 8,
+    borderRadius: 8,
     marginRight: 8,
-    minWidth: 80,
-    alignItems: "center",
   },
-  ratingCategory: {
-    fontSize: 12,
-    color: "#666",
+  ratingText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
   ratingValue: {
     fontSize: 14,
@@ -321,34 +349,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     marginBottom: 4,
-    color: "#007AFF",
+    color: Colors.text.link,
   },
   accessTag: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 16,
-    paddingVertical: 4,
     paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  matchingAccessTag: {
+    backgroundColor: Colors.background.card,
+  },
+  accessTagText: {
+    fontSize: 14,
+  },
+  matchingAccessTagText: {
+    color: Colors.text.primary,
+  },
+  matchingAccessTagContainer: {
+    backgroundColor: Colors.background.list,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     marginRight: 8,
     marginBottom: 8,
   },
-  matchingAccessTag: {
-    backgroundColor: "#4CAF50", // Green background for matching tags
-  },
-  accessTagText: {
-    fontSize: 12,
-    color: "#333",
-  },
-  matchingAccessTagText: {
-    color: "white",
-  },
   directionsButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.button.primary.background,
     borderRadius: 8,
     padding: 8,
     alignItems: "center",
   },
   directionsText: {
-    color: "white",
+    color: Colors.button.primary.text,
     fontWeight: "500",
   },
 });

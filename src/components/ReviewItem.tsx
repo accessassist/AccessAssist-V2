@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Review } from "../types";
 import StarRating from "./StarRating";
+import { Colors } from "../constants/colors";
+import { getTagColor } from "../utils/tagCategoryMapping";
 
 interface ReviewItemProps {
   review: Review;
@@ -20,16 +22,49 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, userName }) => {
 
       <View style={styles.ratingsContainer}>
         <View style={styles.ratingItem}>
-          <Text style={styles.ratingLabel}>Physical</Text>
-          <StarRating rating={review.physicalRating || 0} size={16} />
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.physical.main },
+            ]}
+          >
+            Physical
+          </Text>
+          <StarRating
+            rating={review.physicalRating || 0}
+            size={16}
+            color={Colors.categories.physical.main}
+          />
         </View>
         <View style={styles.ratingItem}>
-          <Text style={styles.ratingLabel}>Sensory</Text>
-          <StarRating rating={review.sensoryRating || 0} size={16} />
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.sensory.main },
+            ]}
+          >
+            Sensory
+          </Text>
+          <StarRating
+            rating={review.sensoryRating || 0}
+            size={16}
+            color={Colors.categories.sensory.main}
+          />
         </View>
         <View style={styles.ratingItem}>
-          <Text style={styles.ratingLabel}>Cognitive</Text>
-          <StarRating rating={review.cognitiveRating || 0} size={16} />
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.cognitive.main },
+            ]}
+          >
+            Cognitive
+          </Text>
+          <StarRating
+            rating={review.cognitiveRating || 0}
+            size={16}
+            color={Colors.categories.cognitive.main}
+          />
         </View>
       </View>
 
@@ -37,11 +72,27 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, userName }) => {
 
       {review.accessTags && review.accessTags.length > 0 && (
         <View style={styles.tagsContainer}>
-          {review.accessTags.map((tag, index) => (
-            <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
+          {review.accessTags.map((tag, index) => {
+            const categoryColor = getTagColor(tag);
+
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.tag,
+                  {
+                    backgroundColor: Colors.background.card,
+                    borderColor: categoryColor,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.tagText, { color: categoryColor }]}>
+                  {tag}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       )}
     </View>
@@ -50,11 +101,11 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, userName }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "white",
+    backgroundColor: Colors.background.card,
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: Colors.text.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -69,9 +120,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: "600",
+    color: Colors.text.primary,
   },
   date: {
-    color: "#666",
+    color: Colors.text.secondary,
     fontSize: 14,
   },
   ratingsContainer: {
@@ -85,13 +137,13 @@ const styles = StyleSheet.create({
   },
   ratingLabel: {
     fontSize: 14,
-    color: "#666",
     width: 80,
   },
   comment: {
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 12,
+    color: Colors.text.primary,
   },
   tagsContainer: {
     flexDirection: "row",
@@ -99,16 +151,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   tag: {
-    backgroundColor: "#e8f4fd",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     marginRight: 6,
     marginBottom: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   tagText: {
     fontSize: 12,
-    color: "#0066cc",
   },
 });
 

@@ -22,6 +22,7 @@ import { CompositeScreenProps } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { useAuth } from "../contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../constants/colors";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Home">,
@@ -281,17 +282,17 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.background.secondary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: Colors.text.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   activeFilterButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.button.primary,
   },
   modalOverlay: {
     flex: 1,
@@ -315,25 +316,26 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.background.secondary,
   },
   selectedFilterOption: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: Colors.background.highlight,
     borderWidth: 1,
-    borderColor: "#007AFF",
+    borderColor: Colors.button.primary,
   },
   filterOptionText: {
     fontSize: 16,
+    color: Colors.text.primary,
   },
   closeButton: {
     marginTop: 20,
     padding: 15,
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.button.primary,
     borderRadius: 10,
     alignItems: "center",
   },
   closeButtonText: {
-    color: "white",
+    color: Colors.text.light,
     fontSize: 16,
     fontWeight: "bold",
   },

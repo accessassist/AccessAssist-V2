@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+import { Colors } from "../constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -34,6 +35,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Email"
+          placeholderTextColor={Colors.text.secondary}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -42,6 +44,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Password"
+          placeholderTextColor={Colors.text.secondary}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -63,46 +66,59 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.background.app,
     alignItems: "center",
     justifyContent: "center",
+    padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 40,
+    color: Colors.text.primary,
   },
   inputContainer: {
-    width: "80%",
-    marginBottom: 20,
+    width: "100%",
+    maxWidth: 400,
   },
   input: {
-    height: 40,
-    borderColor: "gray",
+    height: 50,
+    backgroundColor: Colors.background.card,
+    borderColor: Colors.background.divider,
     borderWidth: 1,
-    marginBottom: 10,
-    padding: 10,
+    marginBottom: 16,
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    color: Colors.text.primary,
   },
   button: {
-    backgroundColor: "#007bff",
+    backgroundColor: Colors.button.primary.background,
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: "center",
+    marginTop: 10,
+    shadowColor: Colors.text.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   buttonText: {
-    color: "#fff",
+    color: Colors.text.light,
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
   createAccountButton: {
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 16,
   },
   createAccountButtonText: {
-    color: "#007bff",
+    color: Colors.button.primary.background,
     fontSize: 16,
+    fontWeight: "500",
   },
 });
 

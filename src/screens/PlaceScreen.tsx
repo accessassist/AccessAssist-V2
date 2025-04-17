@@ -19,6 +19,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useFocusEffect } from "@react-navigation/native";
+import { Colors } from "../constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Place">;
 
@@ -66,23 +67,71 @@ const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
 
       <View style={styles.ratingsContainer}>
         <View style={styles.ratingItem}>
-          <Text style={styles.ratingLabel}>Physical</Text>
-          <StarRating rating={place.physicalRating} size={24} />
-          <Text style={styles.ratingValue}>
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.physical.main },
+            ]}
+          >
+            Physical
+          </Text>
+          <StarRating
+            rating={place.physicalRating}
+            size={24}
+            color={Colors.categories.physical.main}
+          />
+          <Text
+            style={[
+              styles.ratingValue,
+              { color: Colors.categories.physical.main },
+            ]}
+          >
             {place.physicalRating.toFixed(1)}
           </Text>
         </View>
         <View style={styles.ratingItem}>
-          <Text style={styles.ratingLabel}>Sensory</Text>
-          <StarRating rating={place.sensoryRating} size={24} />
-          <Text style={styles.ratingValue}>
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.sensory.main },
+            ]}
+          >
+            Sensory
+          </Text>
+          <StarRating
+            rating={place.sensoryRating}
+            size={24}
+            color={Colors.categories.sensory.main}
+          />
+          <Text
+            style={[
+              styles.ratingValue,
+              { color: Colors.categories.sensory.main },
+            ]}
+          >
             {place.sensoryRating.toFixed(1)}
           </Text>
         </View>
         <View style={styles.ratingItem}>
-          <Text style={styles.ratingLabel}>Cognitive</Text>
-          <StarRating rating={place.cognitiveRating} size={24} />
-          <Text style={styles.ratingValue}>
+          <Text
+            style={[
+              styles.ratingLabel,
+              { color: Colors.categories.cognitive.main },
+            ]}
+          >
+            Cognitive
+          </Text>
+          <StarRating
+            rating={place.cognitiveRating}
+            size={24}
+            color={Colors.categories.cognitive.main}
+          />
+          <Text
+            style={[
+              styles.ratingValue,
+              { color: Colors.categories.cognitive.main },
+            ]}
+          >
             {place.cognitiveRating.toFixed(1)}
           </Text>
         </View>
@@ -148,12 +197,12 @@ const styles = StyleSheet.create({
   ratingLabel: {
     width: 80,
     fontSize: 16,
-    color: "#333",
+    fontWeight: "600",
   },
   ratingValue: {
     marginLeft: 12,
     fontSize: 16,
-    color: "#666",
+    fontWeight: "600",
   },
   addReviewButton: {
     backgroundColor: "#0066cc",
