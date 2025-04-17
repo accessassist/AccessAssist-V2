@@ -6,6 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -29,37 +33,51 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>AccessAssist</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor={Colors.text.secondary}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor={Colors.text.secondary}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.createAccountButton}
-          onPress={() => navigation.navigate("CreateAccount")}
-        >
-          <Text style={styles.createAccountButtonText}>Create Account</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.contentContainer}>
+          <Image
+            source={require("../../assets/images/appgraphic.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor={Colors.text.secondary}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor={Colors.text.secondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createAccountButton}
+              onPress={() => navigation.navigate("CreateAccount")}
+            >
+              <Text style={styles.createAccountButtonText}>Create Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -67,19 +85,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background.app,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  contentContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 40,
-    color: Colors.text.primary,
+  logo: {
+    width: 300,
+    height: 300,
+    marginBottom: 20,
   },
   inputContainer: {
     width: "100%",
     maxWidth: 400,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: Colors.text.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   input: {
     height: 50,

@@ -6,7 +6,7 @@ export const Colors = {
       light: "#B2DFDB",
     },
     sensory: {
-      main: "#FFB703",
+      main: "#E69F00",
       light: "#FFE082",
     },
     cognitive: {
