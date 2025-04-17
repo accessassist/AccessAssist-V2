@@ -8,6 +8,8 @@ import {
   ScrollView,
   Alert,
   ColorValue,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -142,143 +144,152 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Accessibility Ratings</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Text style={styles.sectionTitle}>Accessibility Ratings</Text>
 
-        <View style={styles.ratingSection}>
-          <Text
-            style={[
-              styles.ratingLabel,
-              { color: Colors.categories.physical.main },
-            ]}
-          >
-            Physical Accessibility
-          </Text>
-          <StarRating
-            rating={physicalRating}
-            onRatingChange={setPhysicalRating}
-            size={30}
-            color={Colors.categories.physical.main}
-          />
-        </View>
-
-        <View style={styles.ratingSection}>
-          <Text
-            style={[
-              styles.ratingLabel,
-              { color: Colors.categories.sensory.main },
-            ]}
-          >
-            Sensory Accessibility
-          </Text>
-          <StarRating
-            rating={sensoryRating}
-            onRatingChange={setSensoryRating}
-            size={30}
-            color={Colors.categories.sensory.main}
-          />
-        </View>
-
-        <View style={styles.ratingSection}>
-          <Text
-            style={[
-              styles.ratingLabel,
-              { color: Colors.categories.cognitive.main },
-            ]}
-          >
-            Cognitive Accessibility
-          </Text>
-          <StarRating
-            rating={cognitiveRating}
-            onRatingChange={setCognitiveRating}
-            size={30}
-            color={Colors.categories.cognitive.main}
-          />
-        </View>
-
-        <Text style={styles.sectionTitle}>Access Features</Text>
-
-        <View style={styles.categoryButtons}>
-          {(["Physical", "Sensory", "Cognitive"] as const).map((category) => (
-            <TouchableOpacity
-              key={category}
+          <View style={styles.ratingSection}>
+            <Text
               style={[
-                styles.categoryButton,
-                selectedCategory === category && {
-                  backgroundColor: getCategoryColor(category),
-                  borderColor: getCategoryColor(category),
-                  borderWidth: 1,
-                },
+                styles.ratingLabel,
+                { color: Colors.categories.physical.main },
               ]}
-              onPress={() => setSelectedCategory(category)}
             >
-              <Text
-                style={[
-                  styles.categoryButtonText,
-                  {
-                    color:
-                      selectedCategory === category
-                        ? Colors.text.light
-                        : getCategoryColor(category),
-                  },
-                ]}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              Physical Accessibility
+            </Text>
+            <StarRating
+              rating={physicalRating}
+              onRatingChange={setPhysicalRating}
+              size={30}
+              color={Colors.categories.physical.main}
+            />
+          </View>
 
-        {selectedCategory && (
-          <View style={styles.tagsContainer}>
-            {filteredTags.map((tag) => (
+          <View style={styles.ratingSection}>
+            <Text
+              style={[
+                styles.ratingLabel,
+                { color: Colors.categories.sensory.main },
+              ]}
+            >
+              Sensory Accessibility
+            </Text>
+            <StarRating
+              rating={sensoryRating}
+              onRatingChange={setSensoryRating}
+              size={30}
+              color={Colors.categories.sensory.main}
+            />
+          </View>
+
+          <View style={styles.ratingSection}>
+            <Text
+              style={[
+                styles.ratingLabel,
+                { color: Colors.categories.cognitive.main },
+              ]}
+            >
+              Cognitive Accessibility
+            </Text>
+            <StarRating
+              rating={cognitiveRating}
+              onRatingChange={setCognitiveRating}
+              size={30}
+              color={Colors.categories.cognitive.main}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>Access Features</Text>
+
+          <View style={styles.categoryButtons}>
+            {(["Physical", "Sensory", "Cognitive"] as const).map((category) => (
               <TouchableOpacity
-                key={tag.id}
+                key={category}
                 style={[
-                  styles.selectedTag,
-                  {
-                    backgroundColor: selectedTags.includes(tag.name)
-                      ? getCategoryColor(selectedCategory)
-                      : Colors.background.card,
-                    borderColor: getCategoryColor(selectedCategory),
+                  styles.categoryButton,
+                  selectedCategory === category && {
+                    backgroundColor: getCategoryColor(category),
+                    borderColor: getCategoryColor(category),
                     borderWidth: 1,
                   },
                 ]}
-                onPress={() => handleTagPress(tag.name)}
+                onPress={() => setSelectedCategory(category)}
               >
                 <Text
                   style={[
-                    styles.selectedTagText,
+                    styles.categoryButtonText,
                     {
-                      color: selectedTags.includes(tag.name)
-                        ? Colors.text.light
-                        : getCategoryColor(selectedCategory),
+                      color:
+                        selectedCategory === category
+                          ? Colors.text.light
+                          : getCategoryColor(category),
                     },
                   ]}
                 >
-                  {tag.name}
+                  {category}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-        )}
 
-        <Text style={styles.sectionTitle}>Additional Comments</Text>
-        <TextInput
-          style={styles.commentInput}
-          multiline
-          numberOfLines={4}
-          value={comment}
-          onChangeText={setComment}
-          placeholder="Share your experience..."
-        />
+          {selectedCategory && (
+            <View style={styles.tagsContainer}>
+              {filteredTags.map((tag) => (
+                <TouchableOpacity
+                  key={tag.id}
+                  style={[
+                    styles.selectedTag,
+                    {
+                      backgroundColor: selectedTags.includes(tag.name)
+                        ? getCategoryColor(selectedCategory)
+                        : Colors.background.card,
+                      borderColor: getCategoryColor(selectedCategory),
+                      borderWidth: 1,
+                    },
+                  ]}
+                  onPress={() => handleTagPress(tag.name)}
+                >
+                  <Text
+                    style={[
+                      styles.selectedTagText,
+                      {
+                        color: selectedTags.includes(tag.name)
+                          ? Colors.text.light
+                          : getCategoryColor(selectedCategory),
+                      },
+                    ]}
+                  >
+                    {tag.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Submit Review</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <Text style={styles.sectionTitle}>Comments</Text>
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Share your experience..."
+            placeholderTextColor={Colors.text.secondary}
+            value={comment}
+            onChangeText={setComment}
+            multiline
+            numberOfLines={4}
+          />
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={styles.submitButtonText}>Submit Review</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -287,8 +298,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background.app,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
-    padding: 16,
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 18,
