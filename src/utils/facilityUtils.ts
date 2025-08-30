@@ -1,3 +1,10 @@
+/*
+  Facility utils acts as a side program used in the services to calculate certain aspects of 
+  the facility service. This includes updating the review metrics when a new review gets added
+  as well as observing the attached review access tags and obtaining the top three most commonly
+  listed ones with the reviews.
+ */
+
 import { Facility, Review } from "../types";
 
 interface RatingAccumulator {

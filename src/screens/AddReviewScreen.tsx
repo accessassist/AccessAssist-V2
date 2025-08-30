@@ -1,3 +1,11 @@
+/*
+  Add review screen implements all visual animation and some functionality of the adding
+  a review screen for the facilities. This includes where and what happens when certain buttons
+  are on screen and what happens when the user interacts with them. It also includes all style
+  information about the buttons and text on the add review screen. Some of this info is contained
+  within the constants folder if you are looking to change global color/text options.
+*/
+
 import React, { useState, useEffect } from "react";
 import {
   View,

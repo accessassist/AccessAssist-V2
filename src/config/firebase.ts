@@ -1,3 +1,10 @@
+/*
+  Firebase utilizes all the firebase identifying information to link the application
+  back to the firebase data directly so information can be added or deleted from it 
+  as needed during coding or when being used by actual users. This script is important
+  to allowing the main application to function and save user data. 
+ */
+
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";

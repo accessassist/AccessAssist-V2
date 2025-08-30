@@ -1,3 +1,10 @@
+/*
+  The bottom tab navigator is the small menu that appears at the bottom of the screen.
+   It contains the app page icons and the interactive abilities to switch between pages 
+   based on which button is pressed. Includes stylization and boolean values that
+   track the current state of the icons.
+ */
+
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,7 +50,7 @@ const BottomTabNavigator = () => {
           fontWeight: "500",
         },
       })}
-    >
+    > 
       <Tab.Screen
         name="Home"
         component={HomeScreen}

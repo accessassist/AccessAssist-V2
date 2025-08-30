@@ -1,3 +1,11 @@
+/*
+  Colors simply contains all of the identifying app color sheets. Some sections
+  have their own style sheets and colorings however the default reference sheet
+  for button colors, category colors, text, and more are listed here for ease
+  of access; simply importing the color sheet will give you access to these. 
+  There is even some of the legacy colorings from the design prototypes!
+ */
+
 export const Colors = {
   // Category colors
   categories: {

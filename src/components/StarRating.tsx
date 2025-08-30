@@ -1,3 +1,10 @@
+/*
+  The star rating section details the styling and functionality of the rating system
+  for each of the access tag categories (Physical, Sensory, Cognitive). It also allows for 
+  the display of the average/overall rating in as close of an approximation as possible.
+  This includes coloring for star presses and averaging of values for half stars.
+ */
+
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";

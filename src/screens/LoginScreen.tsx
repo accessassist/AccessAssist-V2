@@ -1,3 +1,11 @@
+/*
+  Includes all the style and system authentication for the login screen to 
+  enter Access Assist. This includes the calls to firebase for user authentication,
+  the placeholder text in the input fields, the padding and formatting for both the
+  buttons and the text as well as the app logo. Some defaults for text and color are
+  located in the constants folder instead of the style sheet.
+ */
+
 import React, { useState } from "react";
 import {
   View,

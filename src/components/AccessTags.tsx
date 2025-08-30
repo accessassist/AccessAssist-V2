@@ -1,3 +1,9 @@
+/*
+  Contains all the component information for when access tags are used in the
+  filtration or profile pages to select them. Contains a set list of tags as 
+  well as the stylization for them as well as the interaction code.
+ */
+
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 

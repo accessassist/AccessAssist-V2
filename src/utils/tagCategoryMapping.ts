@@ -1,3 +1,10 @@
+/* 
+  Tag category mapping simply maps each of the access tags available in the 
+  access assist library to their corresponding category. It also contains some
+  methods for obtaining the category listed for a certain tag as well as displaying
+  the color listed for a access tag category.
+ */
+
 import { AccessTag } from "../types";
 import { Colors } from "../constants/colors";
 

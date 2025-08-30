@@ -1,3 +1,10 @@
+/*
+  Decorative shapes is simply that, it contains the stylization for each of the access tag
+  categories using distinguishable shapes as a basis along with color formats in the style
+  sheet section. Allows for those with colorblindness or similar issues to be able to better
+  make out general outlines and their tag relations. 
+ */
+
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Colors } from "../constants/colors";
