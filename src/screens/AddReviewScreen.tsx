@@ -15,9 +15,8 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../contexts/AuthContext";
 import StarRating from "../components/StarRating";
+import { AccessTags } from "../components/AccessTags";
 import { addReview } from "../api/firestoreService";
-import { getAccessTags } from "../api/firestoreService";
-import { AccessTag } from "../types";
 import { Colors } from "../constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddReview">;
@@ -36,26 +35,9 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [cognitiveRating, setCognitiveRating] = useState(0);
   const [comment, setComment] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [accessTags, setAccessTags] = useState<AccessTag[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<
     "Physical" | "Sensory" | "Cognitive" | null
   >(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadAccessTags = async () => {
-      try {
-        const tags = await getAccessTags();
-        setAccessTags(tags);
-      } catch (error) {
-        console.error("Error loading access tags:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAccessTags();
-  }, []);
 
   const handleTagPress = (tag: string) => {
     setSelectedTags((prevTags) =>
@@ -105,43 +87,23 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const filteredTags = selectedCategory
-    ? accessTags.filter(
-        (tag) => tag.category?.toLowerCase() === selectedCategory.toLowerCase()
-      )
-    : [];
-
   const getCategoryColor = (category: "Physical" | "Sensory" | "Cognitive") => {
-    switch (category) {
-      case "Physical":
-        return Colors.categories.physical.main;
-      case "Sensory":
-        return Colors.categories.sensory.main;
-      case "Cognitive":
-        return Colors.categories.cognitive.main;
-    }
+    const categoryKey = category.toLowerCase() as
+      | "physical"
+      | "sensory"
+      | "cognitive";
+    return Colors.categories[categoryKey].main;
   };
 
   const getCategoryLightColor = (
     category: "Physical" | "Sensory" | "Cognitive"
   ) => {
-    switch (category) {
-      case "Physical":
-        return Colors.categories.physical.light;
-      case "Sensory":
-        return Colors.categories.sensory.light;
-      case "Cognitive":
-        return Colors.categories.cognitive.light;
-    }
+    const categoryKey = category.toLowerCase() as
+      | "physical"
+      | "sensory"
+      | "cognitive";
+    return Colors.categories[categoryKey].light;
   };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
@@ -240,37 +202,16 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           {selectedCategory && (
-            <View style={styles.tagsContainer}>
-              {filteredTags.map((tag) => (
-                <TouchableOpacity
-                  key={tag.id}
-                  style={[
-                    styles.selectedTag,
-                    {
-                      backgroundColor: selectedTags.includes(tag.name)
-                        ? getCategoryColor(selectedCategory)
-                        : Colors.background.card,
-                      borderColor: getCategoryColor(selectedCategory),
-                      borderWidth: 1,
-                    },
-                  ]}
-                  onPress={() => handleTagPress(tag.name)}
-                >
-                  <Text
-                    style={[
-                      styles.selectedTagText,
-                      {
-                        color: selectedTags.includes(tag.name)
-                          ? Colors.text.light
-                          : getCategoryColor(selectedCategory),
-                      },
-                    ]}
-                  >
-                    {tag.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <AccessTags
+              selectedTags={selectedTags}
+              onTagSelect={setSelectedTags}
+              category={
+                selectedCategory.toLowerCase() as
+                  | "physical"
+                  | "sensory"
+                  | "cognitive"
+              }
+            />
           )}
 
           <Text style={styles.sectionTitle}>Comments</Text>
@@ -336,37 +277,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  selectedTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
-  },
-  selectedTagText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  removeTagButton: {
-    padding: 2,
-  },
-  removeTagText: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  tagsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 24,
-  },
+
   commentInput: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.border.default,
     borderRadius: 8,
     padding: 12,
     marginBottom: 24,
