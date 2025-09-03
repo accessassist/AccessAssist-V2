@@ -1,3 +1,11 @@
+/*
+ Below are all the defined object types that are stored in the database for the access assist app.
+ These objects include user profiles, user authentication, facility information, user review
+ information, and access tags. These are blanket objects used throughout the access assist app.
+ All their included variables as well as their types are listed in the code below. Some
+ variables are not always necessary so they are marked with "?".
+ */
+
 export interface User {
   id: string;
   email: string;

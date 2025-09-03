@@ -1,3 +1,9 @@
+/*
+  Places list contains all the information displayed when viewing a facility using the google maps API.
+  It contains the code for displaying the facility reviews, giving the user directions to the specified location, 
+  filtering the places based on thei attached access tags, and any styling for buttons or text used in the popup component.
+ */
+
 import React, { useEffect, useState } from "react";
 import {
   View,

@@ -1,3 +1,11 @@
+/*
+  Contains all of the information for the profile screen in the access assist app. 
+  This contains profile editing methods such as changing profile info and design as 
+  well as managing and sending requests to the database for changes reguarding the
+  user's profile info. It also contains the styling and positioning for many different
+  interactable features and buttons located within the profile screen. Most of the info
+  is here however some is within the constant folder and must be edited there instead.
+ */
 import React, { useState } from "react";
 import {
   View,

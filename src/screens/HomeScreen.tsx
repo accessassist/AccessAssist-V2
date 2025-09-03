@@ -1,3 +1,11 @@
+/* 
+  This section contains all the main components of the home screen. 
+  This includes the background map, search bar to access any facility 
+  listed in the location database, filters for access tags and 
+  some account verification. Styles for most of the buttons and on-screen
+  displays are here, the rest are in the constants folder. 
+ */
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,

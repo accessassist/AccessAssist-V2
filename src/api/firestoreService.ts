@@ -1,3 +1,10 @@
+/*
+  Firestore service is the location of every method that gets passed back to the database is stored. This
+  includes any functionality relating to user accounts, facility lookups or editing as well as extra
+  methods for access tag manipulation since all of the info is stored within the firebase data. Most likely
+  any method relating back to the user account or facility info can be traced back to this service script.
+ */
+
 import { db } from "../config/firebase";
 import {
   doc,

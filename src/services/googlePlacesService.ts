@@ -1,3 +1,11 @@
+/*
+  Google place service contains the methods involving the google maps API we have
+  installed for the access assist app. There are only a few things here due to most of them
+  being unaccessible however the ability to search for specific locations and obtain their
+  information as well as a default display if the place is not in the database already is 
+  present.
+ */
+
 import { Facility } from "../types";
 import Constants from "expo-constants";
 import { doc, getDoc } from "firebase/firestore";

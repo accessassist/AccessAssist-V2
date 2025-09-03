@@ -1,3 +1,8 @@
+/*
+  Simple service for gathering current location, requires the permission
+  to access location in order to create the request. 
+ */
+
 import * as Location from "expo-location";
 import { LocationObject } from "expo-location";
 

@@ -1,3 +1,10 @@
+/*
+  Seeding access tags provides a general listing for every single accessibility tag 
+  contained within the access assist library. There is also the ability to add new access
+  tags at the very bottom. Every item here contains the tag name, description, icon, and the
+  category that the tag belongs to (Physical, Sensory, Cognitive).
+ */
+
 const { addAccessTag } = require("../api/firestoreService");
 const { AccessTag } = require("../types");
 

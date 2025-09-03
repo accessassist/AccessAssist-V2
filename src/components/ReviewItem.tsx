@@ -1,3 +1,9 @@
+/*
+  The review item is displayed on the reviews screen of the app and contains
+  the styling and components needed to display a user's review information including their
+  profile, overall ratings for each category as well as any comments they wrote. 
+ */
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Review } from "../types";
