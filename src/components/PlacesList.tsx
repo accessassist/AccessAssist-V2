@@ -16,8 +16,8 @@ import {
   Platform,
 } from "react-native";
 import { Facility, AccessTag } from "../types";
-import { Colors } from "../constants/colors";
-import { getTagColor } from "../utils/tagCategoryMapping";
+import { Colors, ColorUtils } from "../constants/colors";
+import { getAccessTags } from "../api/firestoreService";
 
 type FilterOption = "none" | "myAccessTags" | "selectAccessTag";
 
@@ -35,14 +35,20 @@ interface RatingTileProps {
 
 const RatingTile: React.FC<RatingTileProps> = ({ category, rating }) => {
   // Determine the color based on the category
-  let categoryColor = Colors.text.primary;
-  if (category === "Physical") {
-    categoryColor = Colors.categories.physical.main;
-  } else if (category === "Sensory") {
-    categoryColor = Colors.categories.sensory.main;
-  } else if (category === "Cognitive") {
-    categoryColor = Colors.categories.cognitive.main;
-  }
+  const getCategoryColor = (cat: string): string => {
+    switch (cat) {
+      case "Physical":
+        return Colors.categories.physical.main;
+      case "Sensory":
+        return Colors.categories.sensory.main;
+      case "Cognitive":
+        return Colors.categories.cognitive.main;
+      default:
+        return Colors.text.primary;
+    }
+  };
+
+  const categoryColor = getCategoryColor(category);
 
   return (
     <View style={[styles.ratingTile, { backgroundColor: categoryColor }]}>
@@ -63,6 +69,7 @@ interface AccessTagsProps {
   filterOption: FilterOption;
   accessTagMap: Record<string, string>;
   showAdditionalTags?: boolean;
+  allAccessTags: AccessTag[]; // Add this to get category information
 }
 
 const AccessTags: React.FC<AccessTagsProps> = ({
@@ -71,6 +78,7 @@ const AccessTags: React.FC<AccessTagsProps> = ({
   filterOption,
   accessTagMap,
   showAdditionalTags = false,
+  allAccessTags,
 }) => {
   // Check if any of the tags match the user's access tags
   const hasMatchingTags =
@@ -86,6 +94,42 @@ const AccessTags: React.FC<AccessTagsProps> = ({
   // Otherwise, we'll only show the first 3 common tags
   const tagsToShow = showAdditionalTags ? tags : tags.slice(0, 3);
 
+  // Helper function to get tag colors based on category
+  const getTagStyle = (tagName: string, isMatchingTag: boolean) => {
+    // Find the full tag object to get its category
+    const fullTag = allAccessTags.find((tag) => tag.name === tagName);
+
+    if (fullTag && fullTag.category) {
+      const category = fullTag.category as "physical" | "sensory" | "cognitive";
+
+      if (isMatchingTag) {
+        // Matching tag: use category main color for background, white text
+        return {
+          backgroundColor: ColorUtils.getCategoryColor(category, "main"),
+          borderColor: ColorUtils.getCategoryColor(category, "main"),
+          borderWidth: 1,
+          textColor: Colors.text.light,
+        };
+      } else {
+        // Non-matching tag: use category background color, category main color for text
+        return {
+          backgroundColor: ColorUtils.getCategoryColor(category, "background"),
+          borderColor: ColorUtils.getCategoryColor(category, "main"),
+          borderWidth: 1,
+          textColor: ColorUtils.getCategoryColor(category, "main"),
+        };
+      }
+    }
+
+    // Fallback for tags without category information
+    return {
+      backgroundColor: Colors.background.card,
+      borderColor: Colors.border.default,
+      borderWidth: 1,
+      textColor: Colors.text.secondary,
+    };
+  };
+
   return (
     <View style={styles.accessTagsContainer}>
       {tagsToShow.map((tag, index) => {
@@ -95,29 +139,21 @@ const AccessTags: React.FC<AccessTagsProps> = ({
           !!accessTagMap[tag] &&
           userAccessTags.includes(accessTagMap[tag]);
 
-        // Get the color based on the tag's category
-        const categoryColor = getTagColor(tag);
+        const tagStyle = getTagStyle(tag, isMatchingTag);
 
         return (
           <View
             key={index}
             style={[
               styles.accessTag,
-              isMatchingTag && styles.matchingAccessTag,
               {
-                backgroundColor: Colors.background.card,
-                borderColor: categoryColor,
-                borderWidth: 1,
+                backgroundColor: tagStyle.backgroundColor,
+                borderColor: tagStyle.borderColor,
+                borderWidth: tagStyle.borderWidth,
               },
             ]}
           >
-            <Text
-              style={[
-                styles.accessTagText,
-                isMatchingTag && styles.matchingAccessTagText,
-                { color: categoryColor },
-              ]}
-            >
+            <Text style={[styles.accessTagText, { color: tagStyle.textColor }]}>
               {tag}
             </Text>
           </View>
@@ -133,6 +169,22 @@ const PlacesList: React.FC<PlacesListProps> = ({
   filterOption,
   userAccessTags,
 }) => {
+  const [allAccessTags, setAllAccessTags] = useState<AccessTag[]>([]);
+
+  // Fetch all access tags to get category information
+  useEffect(() => {
+    const loadAccessTags = async () => {
+      try {
+        const tags = await getAccessTags();
+        setAllAccessTags(tags);
+      } catch (error) {
+        console.error("Error loading access tags:", error);
+      }
+    };
+
+    loadAccessTags();
+  }, []);
+
   // Instead of fetching from Firestore, we'll use a hardcoded mapping
   // This is a temporary solution until proper permissions are set up
   const accessTagMap: Record<string, string> = {
@@ -239,6 +291,7 @@ const PlacesList: React.FC<PlacesListProps> = ({
                   userAccessTags={userAccessTags}
                   filterOption={filterOption}
                   accessTagMap={accessTagMap}
+                  allAccessTags={allAccessTags}
                 />
 
                 {/* Additional Matching Tags */}
@@ -253,6 +306,7 @@ const PlacesList: React.FC<PlacesListProps> = ({
                       filterOption={filterOption}
                       accessTagMap={accessTagMap}
                       showAdditionalTags={true}
+                      allAccessTags={allAccessTags}
                     />
                   </View>
                 )}
@@ -369,22 +423,8 @@ const styles = StyleSheet.create({
     shadowRadius: 1,
     elevation: 1,
   },
-  matchingAccessTag: {
-    backgroundColor: Colors.background.card,
-  },
   accessTagText: {
     fontSize: 14,
-  },
-  matchingAccessTagText: {
-    color: Colors.text.primary,
-  },
-  matchingAccessTagContainer: {
-    backgroundColor: Colors.background.list,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
   },
   directionsButton: {
     backgroundColor: Colors.button.primary.background,

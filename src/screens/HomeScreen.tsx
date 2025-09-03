@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activeFilterButton: {
-    backgroundColor: Colors.button.primary,
+    backgroundColor: Colors.button.primary.background,
   },
   modalOverlay: {
     flex: 1,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   selectedFilterOption: {
     backgroundColor: Colors.background.highlight,
     borderWidth: 1,
-    borderColor: Colors.button.primary,
+    borderColor: Colors.button.primary.background,
   },
   filterOptionText: {
     fontSize: 16,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   closeButton: {
     marginTop: 20,
     padding: 15,
-    backgroundColor: Colors.button.primary,
+    backgroundColor: Colors.button.primary.background,
     borderRadius: 10,
     alignItems: "center",
   },

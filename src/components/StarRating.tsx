@@ -8,6 +8,7 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { ColorUtils } from "../constants/colors";
 
 interface StarRatingProps {
   rating: number;
@@ -19,7 +20,7 @@ interface StarRatingProps {
 const StarRating: React.FC<StarRatingProps> = ({
   rating,
   size = 20,
-  color = "#FFD700",
+  color,
   onRatingChange,
 }) => {
   const handleStarPress = (index: number) => {
@@ -34,6 +35,15 @@ const StarRating: React.FC<StarRatingProps> = ({
         const starFilled = index < Math.floor(rating);
         const hasHalfStar = index === Math.floor(rating) && rating % 1 >= 0.5;
 
+        // Use provided color or default to unified star colors
+        const starColor =
+          color ||
+          (starFilled
+            ? ColorUtils.getStarColor("filled")
+            : hasHalfStar
+            ? ColorUtils.getStarColor("half")
+            : ColorUtils.getStarColor("empty"));
+
         return (
           <TouchableOpacity
             key={index}
@@ -45,7 +55,7 @@ const StarRating: React.FC<StarRatingProps> = ({
                 starFilled ? "star" : hasHalfStar ? "star-half-o" : "star-o"
               }
               size={size}
-              color={color}
+              color={starColor}
               style={styles.star}
             />
           </TouchableOpacity>

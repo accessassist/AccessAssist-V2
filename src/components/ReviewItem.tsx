@@ -8,8 +8,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Review } from "../types";
 import StarRating from "./StarRating";
-import { Colors } from "../constants/colors";
-import { getTagColor } from "../utils/tagCategoryMapping";
+import { Colors, ColorUtils } from "../constants/colors";
 
 interface ReviewItemProps {
   review: Review;
@@ -17,6 +16,80 @@ interface ReviewItemProps {
 }
 
 const ReviewItem: React.FC<ReviewItemProps> = ({ review, userName }) => {
+  // Helper function to determine tag category based on tag name patterns
+  // This is a fallback since reviews only store tag names, not full objects
+  const getTagCategoryFromName = (
+    tagName: string
+  ): "physical" | "sensory" | "cognitive" | null => {
+    const lowerTag = tagName.toLowerCase();
+
+    // Physical accessibility patterns
+    if (
+      lowerTag.includes("wheelchair") ||
+      lowerTag.includes("accessible") ||
+      lowerTag.includes("ramp") ||
+      lowerTag.includes("elevator") ||
+      lowerTag.includes("parking") ||
+      lowerTag.includes("door") ||
+      lowerTag.includes("hallway") ||
+      lowerTag.includes("stall") ||
+      lowerTag.includes("seating") ||
+      lowerTag.includes("washroom")
+    ) {
+      return "physical";
+    }
+
+    // Sensory accessibility patterns
+    if (
+      lowerTag.includes("braille") ||
+      lowerTag.includes("hearing") ||
+      lowerTag.includes("visual") ||
+      lowerTag.includes("audio") ||
+      lowerTag.includes("lighting") ||
+      lowerTag.includes("quiet") ||
+      lowerTag.includes("scent") ||
+      lowerTag.includes("tactile")
+    ) {
+      return "sensory";
+    }
+
+    // Cognitive accessibility patterns
+    if (
+      lowerTag.includes("clear") ||
+      lowerTag.includes("simple") ||
+      lowerTag.includes("picture") ||
+      lowerTag.includes("memory") ||
+      lowerTag.includes("distraction") ||
+      lowerTag.includes("stimulation") ||
+      lowerTag.includes("guidance") ||
+      lowerTag.includes("support")
+    ) {
+      return "cognitive";
+    }
+
+    return null; // Default fallback
+  };
+
+  // Get tag colors based on inferred category
+  const getTagColors = (tagName: string) => {
+    const category = getTagCategoryFromName(tagName);
+
+    if (category) {
+      return {
+        background: ColorUtils.getCategoryColor(category, "background"),
+        border: ColorUtils.getCategoryColor(category, "main"),
+        text: ColorUtils.getCategoryColor(category, "main"),
+      };
+    }
+
+    // Fallback to neutral colors if category can't be determined
+    return {
+      background: Colors.background.card,
+      border: Colors.border.default,
+      text: Colors.text.secondary,
+    };
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -79,7 +152,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, userName }) => {
       {review.accessTags && review.accessTags.length > 0 && (
         <View style={styles.tagsContainer}>
           {review.accessTags.map((tag, index) => {
-            const categoryColor = getTagColor(tag);
+            const tagColors = getTagColors(tag);
 
             return (
               <View
@@ -87,13 +160,13 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, userName }) => {
                 style={[
                   styles.tag,
                   {
-                    backgroundColor: Colors.background.card,
-                    borderColor: categoryColor,
+                    backgroundColor: tagColors.background,
+                    borderColor: tagColors.border,
                     borderWidth: 1,
                   },
                 ]}
               >
-                <Text style={[styles.tagText, { color: categoryColor }]}>
+                <Text style={[styles.tagText, { color: tagColors.text }]}>
                   {tag}
                 </Text>
               </View>
