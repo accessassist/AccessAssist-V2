@@ -1,3 +1,9 @@
+/*
+  Search bar contains the basic functionality as well as the styling for a 
+  default search bar in the app. This includes the search bar shape and color
+  along with the ability to write in search queeries inside of the specified container.
+ */
+
 import React, { useState } from "react";
 import { View, TextInput, StyleSheet } from "react-native";
 

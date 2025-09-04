@@ -1,3 +1,12 @@
+/*
+  The place screen is the screen that displays when the user is attempting to 
+  view a facility to learn more about it. This includes the average rating for each of the
+  access tags, the ability to add your own review, as well as any information linked
+  to the facility object in the database such as accessibility items. Contains the styling
+  and main function calls to the database, some style info contained in constants folder
+  instead of button style sheet listed below.
+ */
+
 import React, { useState, useEffect } from "react";
 import {
   View,

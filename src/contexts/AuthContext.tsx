@@ -1,3 +1,9 @@
+/* 
+  Authenticates the user actions relating to their profile. This includes actions such as 
+  login, logout, authenticate user, change user data, and create new user profile.
+  Each item is authenticated or stored in the included firebase database.
+ */
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "../config/firebase";
 import { User, AuthContextType } from "../types";

@@ -1,3 +1,11 @@
+/*
+  The create account screen for the access assist app. Contains all the syling information
+  for the buttons on this screen including when they are interacted with via the user. Also
+  contains the code for contacting firebase to use account authentication to confirm the user's
+  credentials. Some assets are also contained in the constants folder if you wish to change
+  the preset color and text constants.
+ */
+
 import React, { useState } from "react";
 import {
   View,

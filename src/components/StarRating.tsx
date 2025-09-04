@@ -1,6 +1,14 @@
+/*
+  The star rating section details the styling and functionality of the rating system
+  for each of the access tag categories (Physical, Sensory, Cognitive). It also allows for 
+  the display of the average/overall rating in as close of an approximation as possible.
+  This includes coloring for star presses and averaging of values for half stars.
+ */
+
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { ColorUtils } from "../constants/colors";
 
 interface StarRatingProps {
   rating: number;
@@ -12,7 +20,7 @@ interface StarRatingProps {
 const StarRating: React.FC<StarRatingProps> = ({
   rating,
   size = 20,
-  color = "#FFD700",
+  color,
   onRatingChange,
 }) => {
   const handleStarPress = (index: number) => {
@@ -27,6 +35,15 @@ const StarRating: React.FC<StarRatingProps> = ({
         const starFilled = index < Math.floor(rating);
         const hasHalfStar = index === Math.floor(rating) && rating % 1 >= 0.5;
 
+        // Use provided color or default to unified star colors
+        const starColor =
+          color ||
+          (starFilled
+            ? ColorUtils.getStarColor("filled")
+            : hasHalfStar
+            ? ColorUtils.getStarColor("half")
+            : ColorUtils.getStarColor("empty"));
+
         return (
           <TouchableOpacity
             key={index}
@@ -38,7 +55,7 @@ const StarRating: React.FC<StarRatingProps> = ({
                 starFilled ? "star" : hasHalfStar ? "star-half-o" : "star-o"
               }
               size={size}
-              color={color}
+              color={starColor}
               style={styles.star}
             />
           </TouchableOpacity>

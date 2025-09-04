@@ -1,3 +1,10 @@
+/*
+  Facility service contains all database and editing methods related to interacting
+  with the facility information. This includes getting the facility list from the 
+  database, calculating average of the ratings for display, searching specific
+  facilities, getting the most popular tags, and creating/editing facilities. 
+ */
+
 import { Facility, Review } from "../types";
 import { db } from "../config/firebase";
 import {

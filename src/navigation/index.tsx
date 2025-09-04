@@ -1,3 +1,10 @@
+/*
+  The index for navigation acts as a central hub for all of the pages within the app the
+  user can navigate to. This includes the authentication-only screens like view facility 
+  and add review or non-authentication like the login or create account screens. Sets default
+  params for these pages when they are accessed through nav.
+*/
+
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -16,14 +23,14 @@ const Navigation: React.FC = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   return (
     <NavigationContainer>
       <Stack.Navigator>
         {user ? (
-          // Auth screens
+          // Auth screens, requires authentication to access these main screens.
           <>
             <Stack.Screen
               name="MainApp"
