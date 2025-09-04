@@ -6,7 +6,7 @@
   interactable features and buttons located within the profile screen. Most of the info
   is here however some is within the constant folder and must be edited there instead.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
