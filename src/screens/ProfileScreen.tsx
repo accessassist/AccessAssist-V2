@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,21 +17,24 @@ import { RootStackParamList, TabParamList } from "../navigation/types";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { AccessTag } from "../types";
+import { getAccessTags } from "../api/firestoreService";
+import { Colors } from "../constants/colors";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Profile">,
   NativeStackScreenProps<RootStackParamList>
 >;
 
-type AccessTagCategory = NonNullable<AccessTag["category"]>;
+type AccessTagCategory = "physical" | "sensory" | "cognitive";
 
 const ACCESS_TAG_CONFIG: {
   id: AccessTagCategory;
   icon: keyof typeof Ionicons.glyphMap;
+  displayName: string;
 }[] = [
-  { id: "physical", icon: "body-outline" },
-  { id: "sensory", icon: "eye-outline" },
-  { id: "cognitive", icon: "bulb-outline" },
+  { id: "physical", icon: "body-outline", displayName: "Physical" },
+  { id: "sensory", icon: "eye-outline", displayName: "Sensory" },
+  { id: "cognitive", icon: "bulb-outline", displayName: "Cognitive" },
 ];
 
 const DEFAULT_PROFILE_PIC =
@@ -48,6 +51,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const [accessTags, setAccessTags] = useState<string[]>(
     user?.preferredAccessTags || []
   );
+  const [availableAccessTags, setAvailableAccessTags] = useState<AccessTag[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<AccessTagCategory | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Keep track of original values for comparison
   const [originalFirstName, setOriginalFirstName] = useState(
@@ -61,6 +67,21 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     user?.preferredAccessTags || []
   );
 
+  useEffect(() => {
+    const loadAccessTags = async () => {
+      try {
+        const tags = await getAccessTags();
+        setAvailableAccessTags(tags);
+      } catch (error) {
+        console.error("Error loading access tags:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAccessTags();
+  }, []);
+
   const handleStartEditing = () => {
     setOriginalFirstName(firstName);
     setOriginalLastName(lastName);
@@ -73,6 +94,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     setLastName(originalLastName);
     setProfilePic(originalProfilePic);
     setAccessTags(originalAccessTags);
+    setSelectedCategory(null);
     setIsEditing(false);
   };
 
@@ -99,6 +121,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         Alert.alert("Success", "Profile updated successfully");
       }
 
+      setSelectedCategory(null);
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -106,9 +129,11 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleToggleTag = (tagId: string) => {
+  const handleToggleTag = (tagName: string) => {
     setAccessTags((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+      prev.includes(tagName) 
+        ? prev.filter((t) => t !== tagName) 
+        : [...prev, tagName]
     );
   };
 
@@ -155,54 +180,135 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const renderAccessTags = () => {
-    return ACCESS_TAG_CONFIG.map((tag) => (
-      <TouchableOpacity
-        key={tag.id}
-        style={[
-          styles.tagButton,
-          accessTags.includes(tag.id) && styles.tagButtonSelected,
-        ]}
-        onPress={() => handleToggleTag(tag.id)}
-      >
-        <Ionicons
-          name={tag.icon as keyof typeof Ionicons.glyphMap}
-          size={24}
-          color={accessTags.includes(tag.id) ? "#fff" : "#007AFF"}
-        />
-        <Text
-          style={[
-            styles.tagButtonText,
-            accessTags.includes(tag.id) && styles.tagButtonTextSelected,
-          ]}
-        >
-          {tag.id}
-        </Text>
-      </TouchableOpacity>
-    ));
+  const getCategoryColor = (category: AccessTagCategory) => {
+    switch (category) {
+      case "physical":
+        return Colors.categories.physical.main;
+      case "sensory":
+        return Colors.categories.sensory.main;
+      case "cognitive":
+        return Colors.categories.cognitive.main;
+    }
+  };
+
+  const filteredTags = selectedCategory
+    ? availableAccessTags.filter(
+        (tag) => tag.category?.toLowerCase() === selectedCategory
+      )
+    : [];
+
+  const renderAccessTagsSelector = () => {
+    if (loading) {
+      return <Text style={styles.loadingText}>Loading access tags...</Text>;
+    }
+
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>Preferred Access Features</Text>
+        
+        <View style={styles.categoryButtons}>
+          {ACCESS_TAG_CONFIG.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.categoryButton,
+                selectedCategory === category.id && {
+                  backgroundColor: getCategoryColor(category.id),
+                  borderColor: getCategoryColor(category.id),
+                  borderWidth: 1,
+                },
+              ]}
+              onPress={() => setSelectedCategory(category.id)}
+            >
+              <Text
+                style={[
+                  styles.categoryButtonText,
+                  {
+                    color:
+                      selectedCategory === category.id
+                        ? "#fff"
+                        : getCategoryColor(category.id),
+                  },
+                ]}
+              >
+                {category.displayName}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {selectedCategory && (
+          <View style={styles.tagsContainer}>
+            {filteredTags.map((tag) => (
+              <TouchableOpacity
+                key={tag.id}
+                style={[
+                  styles.tagButton,
+                  {
+                    backgroundColor: accessTags.includes(tag.name)
+                      ? getCategoryColor(selectedCategory)
+                      : "#fff",
+                    borderColor: getCategoryColor(selectedCategory),
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={() => handleToggleTag(tag.name)}
+              >
+                <Text
+                  style={[
+                    styles.tagButtonText,
+                    {
+                      color: accessTags.includes(tag.name)
+                        ? "#fff"
+                        : getCategoryColor(selectedCategory),
+                    },
+                  ]}
+                >
+                  {tag.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    );
   };
 
   const renderCurrentTags = () => {
     if (!user?.preferredAccessTags?.length) return null;
 
     return (
-      <View style={styles.tagsContainer}>
-        {user.preferredAccessTags.map((tagId) => {
-          const tagConfig = ACCESS_TAG_CONFIG.find((t) => t.id === tagId);
-          if (!tagConfig) return null;
-
-          return (
-            <View key={tagId} style={styles.tag}>
-              <Ionicons
-                name={tagConfig.icon as keyof typeof Ionicons.glyphMap}
-                size={20}
-                color="#007AFF"
-                style={styles.tagIcon}
-              />
-              <Text style={styles.tagText}>{tagConfig.id}</Text>
-            </View>
-          );
-        })}
+      <View style={styles.currentTagsContainer}>
+        <Text style={styles.currentTagsTitle}>Your Access Preferences</Text>
+        <View style={styles.currentTagsWrapper}>
+          {user.preferredAccessTags.map((tagName) => {
+            // Find the tag in available tags to get its category
+            const tagData = availableAccessTags.find(t => t.name === tagName);
+            const category = tagData?.category as AccessTagCategory;
+            const tagConfig = ACCESS_TAG_CONFIG.find((t) => t.id === category);
+            
+            return (
+              <View key={tagName} style={styles.currentTag}>
+                {tagConfig && (
+                  <Ionicons
+                    name={tagConfig.icon as keyof typeof Ionicons.glyphMap}
+                    size={16}
+                    color={getCategoryColor(category)}
+                    style={styles.currentTagIcon}
+                  />
+                )}
+                <Text 
+                  style={[
+                    styles.currentTagText,
+                    { color: category ? getCategoryColor(category) : "#007AFF" }
+                  ]}
+                >
+                  {tagName}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
       </View>
     );
   };
@@ -266,8 +372,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               placeholder="Last Name"
               placeholderTextColor="#999"
             />
-            <Text style={styles.sectionTitle}>Preferred Access Tags</Text>
-            <View style={styles.tagsContainer}>{renderAccessTags()}</View>
+            {renderAccessTagsSelector()}
           </View>
         ) : (
           <>
@@ -404,7 +509,33 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
     marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginVertical: 20,
+  },
+  categoryButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fff",
+    flex: 1,
+    alignItems: "center",
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   tagsContainer: {
     flexDirection: "row",
@@ -412,45 +543,54 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     gap: 8,
     marginTop: 8,
+    marginBottom: 16,
   },
   tagButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#007AFF",
     marginBottom: 8,
-    minWidth: 120,
-  },
-  tagButtonSelected: {
-    backgroundColor: "#007AFF",
   },
   tagButtonText: {
-    color: "#007AFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  currentTagsContainer: {
+    width: "100%",
+    marginTop: 8,
+  },
+  currentTagsTitle: {
     fontSize: 16,
-    marginLeft: 8,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 8,
+    textAlign: "center",
   },
-  tagButtonTextSelected: {
-    color: "#fff",
+  currentTagsWrapper: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
   },
-  tag: {
+  currentTag: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F0F0F0",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    margin: 4,
+    margin: 2,
   },
-  tagIcon: {
+  currentTagIcon: {
     marginRight: 6,
   },
-  tagText: {
+  currentTagText: {
     fontSize: 14,
-    color: "#007AFF",
+    fontWeight: "500",
   },
   logoutButton: {
     backgroundColor: "#007AFF",
