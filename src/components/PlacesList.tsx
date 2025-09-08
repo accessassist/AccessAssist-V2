@@ -26,6 +26,7 @@ interface PlacesListProps {
   onPlaceSelect: (place: Facility) => void;
   filterOption: FilterOption;
   userAccessTags: string[];
+  selectedAccessTags: string[];
 }
 
 interface RatingTileProps {
@@ -80,15 +81,18 @@ const AccessTags: React.FC<AccessTagsProps> = ({
   showAdditionalTags = false,
   allAccessTags,
 }) => {
-  // Check if any of the tags match the user's access tags
+  // Check if any of the tags match the user's access tags or selected tags
   const hasMatchingTags =
-    filterOption === "myAccessTags" &&
-    userAccessTags.length > 0 &&
-    tags.some((tagName) => {
-      // Check if the tag name exists in our mapping
-      const tagId = accessTagMap[tagName];
-      return !!tagId && userAccessTags.includes(tagId);
-    });
+    (filterOption === "myAccessTags" &&
+      userAccessTags.length > 0 &&
+      tags.some((tagName) => {
+        // Check if the tag name exists in our mapping
+        const tagId = accessTagMap[tagName];
+        return !!tagId && userAccessTags.includes(tagId);
+      })) ||
+    (filterOption === "selectAccessTag" &&
+      userAccessTags.length > 0 &&
+      tags.some((tagName) => userAccessTags.includes(tagName)));
 
   // If showAdditionalTags is true, we'll show all matching tags
   // Otherwise, we'll only show the first 3 common tags
@@ -134,10 +138,13 @@ const AccessTags: React.FC<AccessTagsProps> = ({
     <View style={styles.accessTagsContainer}>
       {tagsToShow.map((tag, index) => {
         const isMatchingTag =
-          filterOption === "myAccessTags" &&
-          userAccessTags.length > 0 &&
-          !!accessTagMap[tag] &&
-          userAccessTags.includes(accessTagMap[tag]);
+          (filterOption === "myAccessTags" &&
+            userAccessTags.length > 0 &&
+            !!accessTagMap[tag] &&
+            userAccessTags.includes(accessTagMap[tag])) ||
+          (filterOption === "selectAccessTag" &&
+            userAccessTags.length > 0 &&
+            userAccessTags.includes(tag));
 
         const tagStyle = getTagStyle(tag, isMatchingTag);
 
@@ -168,6 +175,7 @@ const PlacesList: React.FC<PlacesListProps> = ({
   onPlaceSelect,
   filterOption,
   userAccessTags,
+  selectedAccessTags,
 }) => {
   const [allAccessTags, setAllAccessTags] = useState<AccessTag[]>([]);
 
@@ -222,25 +230,39 @@ const PlacesList: React.FC<PlacesListProps> = ({
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
         {places.map((place) => {
-          // Check if this place has matching access tags
-          const hasMatchingTags =
-            filterOption === "myAccessTags" &&
-            userAccessTags.length > 0 &&
-            place.accessTags.some((tagName) => {
-              // Check if the tag name exists in our mapping
+          // Check if this place has matching access tags based on filter option
+          let hasMatchingTags = false;
+          let matchingTags: string[] = [];
+
+          if (filterOption === "myAccessTags") {
+            // Filter by user's preferred access tags
+            hasMatchingTags =
+              userAccessTags.length > 0 &&
+              place.accessTags.some((tagName) => {
+                const tagId = accessTagMap[tagName];
+                return !!tagId && userAccessTags.includes(tagId);
+              });
+
+            matchingTags = place.accessTags.filter((tagName) => {
               const tagId = accessTagMap[tagName];
               return !!tagId && userAccessTags.includes(tagId);
             });
+          } else if (filterOption === "selectAccessTag") {
+            // Filter by selected access tags
+            hasMatchingTags =
+              selectedAccessTags.length > 0 &&
+              place.accessTags.some((tagName) =>
+                selectedAccessTags.includes(tagName)
+              );
 
-          // Find user's matching access tags for this place
-          const myAccessTags = place.accessTags.filter((tagName) => {
-            const tagId = accessTagMap[tagName];
-            return !!tagId && userAccessTags.includes(tagId);
-          });
+            matchingTags = place.accessTags.filter((tagName) =>
+              selectedAccessTags.includes(tagName)
+            );
+          }
 
-          // Debug: Log the place's access tags and user matches
-          if (myAccessTags.length > 0) {
-            console.log(`Place ${place.name} - My Access Tags:`, myAccessTags);
+          // Debug: Log the place's access tags and matches
+          if (matchingTags.length > 0) {
+            console.log(`Place ${place.name} - Matching Tags:`, matchingTags);
           }
 
           return (
@@ -284,15 +306,21 @@ const PlacesList: React.FC<PlacesListProps> = ({
                   allAccessTags={allAccessTags}
                 />
 
-                {/* My Access Tags Section */}
-                {myAccessTags.length > 0 && (
+                {/* Matching Access Tags Section */}
+                {matchingTags.length > 0 && (
                   <View style={styles.myAccessTagsContainer}>
                     <Text style={styles.myAccessTagsTitle}>
-                      My Access Tags:
+                      {filterOption === "myAccessTags"
+                        ? "My Access Tags:"
+                        : "Selected Access Tags:"}
                     </Text>
                     <AccessTags
-                      tags={myAccessTags}
-                      userAccessTags={userAccessTags}
+                      tags={matchingTags}
+                      userAccessTags={
+                        filterOption === "myAccessTags"
+                          ? userAccessTags
+                          : selectedAccessTags
+                      }
                       filterOption={filterOption}
                       accessTagMap={accessTagMap}
                       showAdditionalTags={true}

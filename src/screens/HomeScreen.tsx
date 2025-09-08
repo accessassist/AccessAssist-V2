@@ -15,6 +15,8 @@ import {
   Text,
   Modal,
   SafeAreaView,
+  Alert,
+  ScrollView,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -31,6 +33,7 @@ import * as Location from "expo-location";
 import { useAuth } from "../contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants/colors";
+import { AccessTags } from "../components/AccessTags";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Home">,
@@ -54,6 +57,12 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [lastSearchQuery, setLastSearchQuery] = useState<string>("");
   const [filterOption, setFilterOption] = useState<FilterOption>("none");
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedAccessTags, setSelectedAccessTags] = useState<string[]>([]);
+  const [showTagSelectionModal, setShowTagSelectionModal] = useState(false);
+  const [tempSelectedTags, setTempSelectedTags] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<
+    "Physical" | "Sensory" | "Cognitive" | null
+  >(null);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) {
@@ -132,8 +141,47 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const selectFilterOption = (option: FilterOption) => {
-    setFilterOption(option);
-    setShowFilterModal(false);
+    if (option === "selectAccessTag") {
+      setShowFilterModal(false);
+      setShowTagSelectionModal(true);
+      setTempSelectedTags([]);
+      setSelectedCategory(null);
+    } else {
+      setFilterOption(option);
+      setShowFilterModal(false);
+      // Clear selected access tags when switching to other filter options
+      if (option === "none" || option === "myAccessTags") {
+        setSelectedAccessTags([]);
+      }
+    }
+  };
+
+  const handleApplySelectedTags = () => {
+    if (tempSelectedTags.length === 0) {
+      Alert.alert(
+        "No Tags Selected",
+        "Please select at least one access tag to filter by."
+      );
+      return;
+    }
+
+    setSelectedAccessTags(tempSelectedTags);
+    setFilterOption("selectAccessTag");
+    setShowTagSelectionModal(false);
+  };
+
+  const handleCancelTagSelection = () => {
+    setShowTagSelectionModal(false);
+    setTempSelectedTags([]);
+    setSelectedCategory(null);
+  };
+
+  const getCategoryColor = (category: "Physical" | "Sensory" | "Cognitive") => {
+    const categoryKey = category.toLowerCase() as
+      | "physical"
+      | "sensory"
+      | "cognitive";
+    return Colors.categories[categoryKey].main;
   };
 
   return (
@@ -203,6 +251,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             }
             filterOption={filterOption}
             userAccessTags={user?.preferredAccessTags || []}
+            selectedAccessTags={selectedAccessTags}
           />
         </>
       )}
@@ -247,6 +296,15 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               onPress={() => selectFilterOption("selectAccessTag")}
             >
               <Text style={styles.filterOptionText}>Select Access Tag</Text>
+              {selectedAccessTags.length > 0 && (
+                <View style={styles.selectedTagsContainer}>
+                  {selectedAccessTags.slice(0, 3).map((tag, index) => (
+                    <View key={index} style={styles.selectedTagChip}>
+                      <Text style={styles.selectedTagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -255,6 +313,95 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             >
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Tag Selection Modal */}
+      <Modal
+        visible={showTagSelectionModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCancelTagSelection}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.tagSelectionModalContent}>
+            <Text style={styles.modalTitle}>Select Access Tags</Text>
+            <Text style={styles.selectionCounter}>
+              {tempSelectedTags.length}/3 selected
+            </Text>
+
+            <View style={styles.categoryButtons}>
+              {(["Physical", "Sensory", "Cognitive"] as const).map(
+                (category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category && {
+                        backgroundColor: getCategoryColor(category),
+                        borderColor: getCategoryColor(category),
+                        borderWidth: 1,
+                      },
+                    ]}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryButtonText,
+                        {
+                          color:
+                            selectedCategory === category
+                              ? Colors.text.light
+                              : getCategoryColor(category),
+                        },
+                      ]}
+                    >
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
+            </View>
+
+            <ScrollView
+              style={styles.tagsScrollView}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              {selectedCategory && (
+                <AccessTags
+                  selectedTags={tempSelectedTags}
+                  onTagSelect={(tags) => {
+                    // Limit selection to 3 tags maximum
+                    if (tags.length <= 3) {
+                      setTempSelectedTags(tags);
+                    }
+                  }}
+                  category={
+                    selectedCategory.toLowerCase() as
+                      | "physical"
+                      | "sensory"
+                      | "cognitive"
+                  }
+                />
+              )}
+            </ScrollView>
+
+            <View style={styles.tagSelectionButtons}>
+              <TouchableOpacity
+                style={styles.cancelTagButton}
+                onPress={handleCancelTagSelection}
+              >
+                <Text style={styles.cancelTagButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyTagButton}
+                onPress={handleApplySelectedTags}
+              >
+                <Text style={styles.applyTagButtonText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -317,8 +464,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: "center",
+  },
+  selectionCounter: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: "center",
+    marginBottom: 20,
   },
   filterOption: {
     padding: 15,
@@ -343,6 +496,87 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   closeButtonText: {
+    color: Colors.text.light,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  selectedTagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+  },
+  selectedTagChip: {
+    backgroundColor: Colors.button.primary.background,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+  selectedTagText: {
+    color: Colors.text.light,
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  tagSelectionModalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+    maxHeight: "80%",
+  },
+  tagsScrollView: {
+    maxHeight: 300,
+    marginBottom: 16,
+  },
+  categoryButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: Colors.background.divider,
+    backgroundColor: Colors.background.card,
+    flex: 1,
+    alignItems: "center",
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  tagSelectionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  cancelTagButton: {
+    flex: 1,
+    padding: 15,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: 10,
+    alignItems: "center",
+    marginRight: 10,
+  },
+  cancelTagButtonText: {
+    color: Colors.text.primary,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  applyTagButton: {
+    flex: 1,
+    padding: 15,
+    backgroundColor: Colors.button.primary.background,
+    borderRadius: 10,
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  applyTagButtonText: {
     color: Colors.text.light,
     fontSize: 16,
     fontWeight: "bold",

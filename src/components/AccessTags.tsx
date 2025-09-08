@@ -42,11 +42,14 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
   }, []);
 
   const handleTagPress = (tag: string) => {
-    onTagSelect(
-      selectedTags.includes(tag)
-        ? selectedTags.filter((t) => t !== tag)
-        : [...selectedTags, tag]
-    );
+    if (selectedTags.includes(tag)) {
+      // If tag is already selected, remove it
+      onTagSelect(selectedTags.filter((t) => t !== tag));
+    } else if (selectedTags.length < 3) {
+      // If tag is not selected and we have less than 3 tags, add it
+      onTagSelect([...selectedTags, tag]);
+    }
+    // If we already have 3 tags and this one isn't selected, do nothing
   };
 
   // Get tag colors based on category and selection state
