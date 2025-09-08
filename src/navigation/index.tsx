@@ -43,6 +43,7 @@ const Navigation: React.FC = () => {
               options={{
                 headerShown: true,
                 title: "Details",
+                headerBackTitle: "Back",
               }}
             />
             <Stack.Screen
@@ -51,6 +52,7 @@ const Navigation: React.FC = () => {
               options={{
                 headerShown: true,
                 title: "Add Review",
+                headerBackTitle: "Back",
               }}
             />
           </>

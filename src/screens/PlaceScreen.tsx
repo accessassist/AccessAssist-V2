@@ -23,7 +23,11 @@ import { RootStackParamList } from "../navigation/types";
 import { Review, User, Facility } from "../types";
 import StarRating from "../components/StarRating";
 import ReviewItem from "../components/ReviewItem";
-import { getFacilityReviews, getFacility } from "../api/firestoreService";
+import {
+  getFacilityReviews,
+  getFacility,
+  getUser,
+} from "../api/firestoreService";
 import { useAuth } from "../contexts/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -49,6 +53,21 @@ const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
       }
       const fetchedReviews = await getFacilityReviews(place.id);
       setReviews(fetchedReviews);
+
+      // Fetch user data for each review author
+      const userIds = [
+        ...new Set(fetchedReviews.map((review) => review.userId)),
+      ];
+      const userPromises = userIds.map((userId) => getUser(userId));
+      const userResults = await Promise.all(userPromises);
+
+      const usersMap: Record<string, User> = {};
+      userResults.forEach((user, index) => {
+        if (user) {
+          usersMap[userIds[index]] = user;
+        }
+      });
+      setUsers(usersMap);
     } catch (error) {
       console.error("Error loading place data:", error);
     } finally {
@@ -158,13 +177,15 @@ const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
         {loading ? (
           <ActivityIndicator size="large" color="#0066cc" />
         ) : reviews.length > 0 ? (
-          reviews.map((review) => (
-            <ReviewItem
-              key={review.id}
-              review={review}
-              userName={users[review.userId]?.firstName || "Anonymous"}
-            />
-          ))
+          reviews.map((review) => {
+            const user = users[review.userId];
+            const userName = user
+              ? `${user.firstName} ${user.lastName.charAt(0).toUpperCase()}.`
+              : "Anonymous";
+            return (
+              <ReviewItem key={review.id} review={review} userName={userName} />
+            );
+          })
         ) : (
           <Text style={styles.noReviews}>No reviews yet</Text>
         )}
