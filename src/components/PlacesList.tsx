@@ -185,12 +185,11 @@ const PlacesList: React.FC<PlacesListProps> = ({
     loadAccessTags();
   }, []);
 
-  // Instead of fetching from Firestore, we'll use a hardcoded mapping
-  // This is a temporary solution until proper permissions are set up
-  const accessTagMap: Record<string, string> = {
-    "Curb Ramp": "mKZfbDAhQroYDgl3s8sG",
-    // Add more mappings as needed
-  };
+  // Create a mapping from access tag names to IDs using the fetched access tags
+  const accessTagMap: Record<string, string> = {};
+  allAccessTags.forEach((tag) => {
+    accessTagMap[tag.name] = tag.id;
+  });
 
   const openDirections = async (place: Facility) => {
     const scheme = Platform.select({
@@ -209,10 +208,13 @@ const PlacesList: React.FC<PlacesListProps> = ({
     }
   };
 
-  // Debug: Log the user's access tags
+  // Debug: Log the user's access tags and mapping
   console.log("User access tags:", userAccessTags);
   console.log("Filter option:", filterOption);
-  console.log("Access tag mapping:", accessTagMap);
+  console.log(
+    "Access tag mapping (first 5):",
+    Object.entries(accessTagMap).slice(0, 5)
+  );
 
   // We don't filter the places anymore, we just highlight matching ones
   // This ensures the order remains the same as the original search results
@@ -220,9 +222,6 @@ const PlacesList: React.FC<PlacesListProps> = ({
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
         {places.map((place) => {
-          // Debug: Log the place's access tags
-          console.log(`Place ${place.name} access tags:`, place.accessTags);
-
           // Check if this place has matching access tags
           const hasMatchingTags =
             filterOption === "myAccessTags" &&
@@ -230,28 +229,19 @@ const PlacesList: React.FC<PlacesListProps> = ({
             place.accessTags.some((tagName) => {
               // Check if the tag name exists in our mapping
               const tagId = accessTagMap[tagName];
-              const isMatch = !!tagId && userAccessTags.includes(tagId);
-              console.log(`Checking tag ${tagName}: ${isMatch} (ID: ${tagId})`);
-              return isMatch;
+              return !!tagId && userAccessTags.includes(tagId);
             });
 
-          console.log(
-            `Place ${place.name} has matching tags: ${hasMatchingTags}`
-          );
+          // Find user's matching access tags for this place
+          const myAccessTags = place.accessTags.filter((tagName) => {
+            const tagId = accessTagMap[tagName];
+            return !!tagId && userAccessTags.includes(tagId);
+          });
 
-          // Find additional matching tags that aren't in the common tags
-          const commonTags = place.commonAccessTags.slice(0, 3);
-          const additionalMatchingTags =
-            filterOption === "myAccessTags" && userAccessTags.length > 0
-              ? place.accessTags.filter((tag) => {
-                  // Check if the tag is not in the common tags
-                  const isNotCommon = !commonTags.includes(tag);
-                  // Check if the tag matches one of the user's preferred tags
-                  const tagId = accessTagMap[tag];
-                  const isMatching = !!tagId && userAccessTags.includes(tagId);
-                  return isNotCommon && isMatching;
-                })
-              : [];
+          // Debug: Log the place's access tags and user matches
+          if (myAccessTags.length > 0) {
+            console.log(`Place ${place.name} - My Access Tags:`, myAccessTags);
+          }
 
           return (
             <TouchableOpacity
@@ -294,14 +284,14 @@ const PlacesList: React.FC<PlacesListProps> = ({
                   allAccessTags={allAccessTags}
                 />
 
-                {/* Additional Matching Tags */}
-                {additionalMatchingTags.length > 0 && (
-                  <View style={styles.additionalTagsContainer}>
-                    <Text style={styles.additionalTagsTitle}>
-                      Your Access Tags:
+                {/* My Access Tags Section */}
+                {myAccessTags.length > 0 && (
+                  <View style={styles.myAccessTagsContainer}>
+                    <Text style={styles.myAccessTagsTitle}>
+                      My Access Tags:
                     </Text>
                     <AccessTags
-                      tags={additionalMatchingTags}
+                      tags={myAccessTags}
                       userAccessTags={userAccessTags}
                       filterOption={filterOption}
                       accessTagMap={accessTagMap}
@@ -348,7 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.card,
   },
   matchingCard: {
-    backgroundColor: Colors.background.list,
+    backgroundColor: "#E8E8E8",
   },
   imageContainer: {
     width: 80,
@@ -410,6 +400,20 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 4,
     color: Colors.text.link,
+  },
+  myAccessTagsContainer: {
+    marginBottom: 8,
+    padding: 8,
+    backgroundColor: Colors.background.highlight,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.button.primary.background,
+  },
+  myAccessTagsTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 6,
+    color: Colors.text.primary,
   },
   accessTag: {
     paddingHorizontal: 12,
