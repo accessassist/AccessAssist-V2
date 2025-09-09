@@ -557,10 +557,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
-    flex: 1,
-    alignItems: "center",
+    borderColor: Colors.background.divider,
+    backgroundColor: Colors.background.card,
   },
   categoryButtonText: {
     fontSize: 14,
