@@ -65,6 +65,7 @@ export interface Review {
   cognitiveRating?: number;
   accessTags?: string[];
   accessibilityTags?: string[];
+  isAnonymous?: boolean;
   createdAt: string;
 }
 
