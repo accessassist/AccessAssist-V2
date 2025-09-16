@@ -179,7 +179,9 @@ const PlaceScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : reviews.length > 0 ? (
           reviews.map((review) => {
             const user = users[review.userId];
-            const userName = user
+            const userName = review.isAnonymous
+              ? "Anonymous"
+              : user
               ? `${user.firstName} ${user.lastName.charAt(0).toUpperCase()}.`
               : "Anonymous";
             return (
