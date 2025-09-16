@@ -18,6 +18,7 @@ import {
   ColorValue,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -46,6 +47,7 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const [selectedCategory, setSelectedCategory] = useState<
     "Physical" | "Sensory" | "Cognitive" | null
   >(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const handleTagPress = (tag: string) => {
     setSelectedTags((prevTags) =>
@@ -79,6 +81,7 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         cognitiveRating,
         comment,
         accessTags: selectedTags,
+        isAnonymous,
         createdAt: new Date().toISOString(),
       };
 
@@ -233,6 +236,21 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
             numberOfLines={4}
           />
 
+          <View style={styles.anonymousToggle}>
+            <Text style={styles.anonymousLabel}>Post anonymously</Text>
+            <Switch
+              value={isAnonymous}
+              onValueChange={setIsAnonymous}
+              trackColor={{
+                false: Colors.background.divider,
+                true: Colors.button.primary.background,
+              }}
+              thumbColor={
+                isAnonymous ? Colors.text.light : Colors.text.secondary
+              }
+            />
+          </View>
+
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>Submit Review</Text>
           </TouchableOpacity>
@@ -291,10 +309,22 @@ const styles = StyleSheet.create({
     borderColor: Colors.border.default,
     borderRadius: 8,
     padding: 12,
-    marginBottom: 24,
+    marginBottom: 16,
     minHeight: 100,
     textAlignVertical: "top",
     color: Colors.text.primary,
+  },
+  anonymousToggle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    paddingVertical: 8,
+  },
+  anonymousLabel: {
+    fontSize: 16,
+    color: Colors.text.primary,
+    fontWeight: "500",
   },
   submitButton: {
     backgroundColor: Colors.button.primary.background,
