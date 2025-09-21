@@ -38,7 +38,7 @@ export const createUser = async (
 ): Promise<void> => {
   await setDoc(doc(db, COLLECTIONS.USERS, userId), {
     ...userData,
-    preferredAccessTags: [],
+    preferredAccessTags: userData.preferredAccessTags,
     createdAt: new Date().toISOString(),
   });
 };
