@@ -137,13 +137,25 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleToggleTag = (tagName: string) => {
-    setAccessTags((prev) =>
-      prev.includes(tagName) 
-        ? prev.filter((t) => t !== tagName) 
-        : [...prev, tagName]
-    );
-  };
+const handleToggleTag = (tagName: string) => {
+  setAccessTags((prev) => {
+    if (prev.includes(tagName)) {
+      // Remove tag if already selected
+      return prev.filter((t) => t !== tagName);
+    } else {
+      // Check if adding would exceed the limit
+      if (prev.length >= MAX_ACCESS_TAGS) {
+        Alert.alert(
+          "Access tags exceed",
+          `Please choose up to ${MAX_ACCESS_TAGS} access tags. Remove a tag before adding a new one.`
+        );
+        return prev;
+      }
+      // Add tag at the beginning of the array
+      return [tagName, ...prev];
+    }
+  });
+};
 
   const handleLogout = async () => {
     try {
@@ -210,77 +222,85 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       return <Text style={styles.loadingText}>Loading access tags...</Text>;
     }
 
-    return (
-      <View>
-        <Text style={styles.sectionTitle}>Preferred Access Features</Text>
-        
-        <View style={styles.categoryButtons}>
-          {ACCESS_TAG_CONFIG.map((category) => (
-            <TouchableOpacity
-              key={category.id}
+  return (
+    <View>
+      <Text style={styles.sectionTitle}>Preferred Access Features</Text>
+      <Text style={styles.helperText}>
+        Choose up to {MAX_ACCESS_TAGS} access tags that best describe your needs
+      </Text>
+      
+      <View style={styles.categoryButtons}>
+        {ACCESS_TAG_CONFIG.map((category) => (
+          <TouchableOpacity
+            key={category.id}
+            style={[
+              styles.categoryButton,
+              selectedCategory === category.id && {
+                backgroundColor: getCategoryColor(category.id),
+                borderColor: getCategoryColor(category.id),
+                borderWidth: 1,
+              },
+            ]}
+            onPress={() => setSelectedCategory(category.id)}
+          >
+            <Text
               style={[
-                styles.categoryButton,
-                selectedCategory === category.id && {
-                  backgroundColor: getCategoryColor(category.id),
-                  borderColor: getCategoryColor(category.id),
-                  borderWidth: 1,
+                styles.categoryButtonText,
+                {
+                  color:
+                    selectedCategory === category.id
+                      ? "#fff"
+                      : getCategoryColor(category.id),
                 },
               ]}
-              onPress={() => setSelectedCategory(category.id)}
+            >
+              {category.displayName}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {selectedCategory && (
+        <View style={styles.tagsContainer}>
+          <Text style={styles.tagCountText}>
+            Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
+          </Text>
+          {filteredTags.map((tag) => (
+            <TouchableOpacity
+              key={tag.id}
+              style={[
+                styles.tagButton,
+                {
+                  backgroundColor: accessTags.includes(tag.name)
+                    ? getCategoryColor(selectedCategory)
+                    : "#fff",
+                  borderColor: getCategoryColor(selectedCategory),
+                  borderWidth: 1,
+                  opacity: !accessTags.includes(tag.name) && accessTags.length >= MAX_ACCESS_TAGS ? 0.5 : 1,
+                },
+              ]}
+              onPress={() => handleToggleTag(tag.name)}
+              disabled={!accessTags.includes(tag.name) && accessTags.length >= MAX_ACCESS_TAGS}
             >
               <Text
                 style={[
-                  styles.categoryButtonText,
+                  styles.tagButtonText,
                   {
-                    color:
-                      selectedCategory === category.id
-                        ? "#fff"
-                        : getCategoryColor(category.id),
+                    color: accessTags.includes(tag.name)
+                      ? "#fff"
+                      : getCategoryColor(selectedCategory),
                   },
                 ]}
               >
-                {category.displayName}
+                {tag.name}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-
-        {selectedCategory && (
-          <View style={styles.tagsContainer}>
-            {filteredTags.map((tag) => (
-              <TouchableOpacity
-                key={tag.id}
-                style={[
-                  styles.tagButton,
-                  {
-                    backgroundColor: accessTags.includes(tag.name)
-                      ? getCategoryColor(selectedCategory)
-                      : "#fff",
-                    borderColor: getCategoryColor(selectedCategory),
-                    borderWidth: 1,
-                  },
-                ]}
-                onPress={() => handleToggleTag(tag.name)}
-              >
-                <Text
-                  style={[
-                    styles.tagButtonText,
-                    {
-                      color: accessTags.includes(tag.name)
-                        ? "#fff"
-                        : getCategoryColor(selectedCategory),
-                    },
-                  ]}
-                >
-                  {tag.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-    );
-  };
+      )}
+    </View>
+  );
+};
 
   const renderCurrentTags = () => {
     if (!user?.preferredAccessTags?.length) return null;
@@ -289,14 +309,14 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.currentTagsContainer}>
         <Text style={styles.currentTagsTitle}>Your Access Preferences</Text>
         <View style={styles.currentTagsWrapper}>
-          {user.preferredAccessTags.map((tagName) => {
-            // Find the tag in available tags to get its category
-            const tagData = availableAccessTags.find(t => t.name === tagName);
+          {user.preferredAccessTags.map((tagId) => {
+            // Find the tag in available tags using the ID
+            const tagData = availableAccessTags.find(t => t.id === tagId);
             const category = tagData?.category as AccessTagCategory;
             const tagConfig = ACCESS_TAG_CONFIG.find((t) => t.id === category);
             
             return (
-              <View key={tagName} style={styles.currentTag}>
+              <View key={tagId} style={styles.currentTag}>
                 {tagConfig && (
                   <Ionicons
                     name={tagConfig.icon as keyof typeof Ionicons.glyphMap}
@@ -311,7 +331,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                     { color: category ? getCategoryColor(category) : "#007AFF" }
                   ]}
                 >
-                  {tagName}
+                  {tagData?.name || tagId}
                 </Text>
               </View>
             );
@@ -320,7 +340,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       </View>
     );
   };
-
+  
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
