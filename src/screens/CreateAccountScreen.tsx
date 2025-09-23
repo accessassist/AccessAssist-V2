@@ -25,14 +25,36 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { createUser } from "../api/firestoreService";
 import { Colors } from "../constants/colors";
+import { AccessTags } from "../components/AccessTags";
+import { Ionicons } from "@expo/vector-icons";
+import { AccessTag } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "CreateAccount">;
+
+type AccessTagCategory = "physical" | "sensory" | "cognitive";
+
+const ACCESS_TAG_CONFIG: {
+  id: AccessTagCategory;
+  icon: keyof typeof Ionicons.glyphMap;
+  displayName: string;
+}[] = [
+  { id: "physical", icon: "body-outline", displayName: "Physical" },
+  { id: "sensory", icon: "eye-outline", displayName: "Sensory" },
+  { id: "cognitive", icon: "bulb-outline", displayName: "Cognitive" },
+];
+
+const MAX_ACCESS_TAGS = 3;
 
 const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<
+      "Physical" | "Sensory" | "Cognitive" | null
+    >(null);
+  const [accessTags, setAccessTags] = useState<string[]>([]);
+  const [availableAccessTags, setAvailableAccessTags] = useState<AccessTag[]>([]);
 
   const handleCreateAccount = async () => {
     if (!email || !password || !firstName || !lastName) {
@@ -52,7 +74,7 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
         email,
         firstName,
         lastName,
-        preferredAccessTags: [],
+        preferredAccessTags: accessTags,
         createdAt: new Date().toISOString(),
       });
 
@@ -66,6 +88,40 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert("Error", (error as Error).message);
     }
   };
+
+  const getCategoryColor = (category: "Physical" | "Sensory" | "Cognitive") => {
+    const categoryKey = category.toLowerCase() as
+      | "physical"
+      | "sensory"
+      | "cognitive";
+      return Colors.categories[categoryKey].main;
+  };
+
+  const filteredTags = selectedCategory
+    ? availableAccessTags.filter(
+        (tag) => tag.category?.toLowerCase() === selectedCategory
+      )
+    : [];
+
+const handleToggleTag = (tagId: string) => {
+  setAccessTags((prev) => {
+    if (prev.includes(tagId)) {
+      // Remove tag if already selected
+      return prev.filter((t) => t !== tagId);
+    } else {
+      // Check if adding would exceed the limit
+      if (prev.length >= MAX_ACCESS_TAGS) {
+        Alert.alert(
+          "Access tags exceed",
+          `Please choose up to ${MAX_ACCESS_TAGS} access tags. Remove a tag before adding a new one.`
+        );
+        return prev;
+      }
+      // Add tag at the beginning of the array
+      return [tagId, ...prev];
+    }
+  });
+};
 
   return (
     <KeyboardAvoidingView
@@ -116,6 +172,94 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
               onChangeText={setPassword}
               secureTextEntry
             />
+
+          <Text style={styles.tagCountText}>
+            Account Accessibility Tags
+          </Text>
+
+          <View style={styles.categoryButtons}>
+            {(["Physical", "Sensory", "Cognitive"] as const).map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === category && {
+                    backgroundColor: getCategoryColor(category),
+                    borderColor: getCategoryColor(category),
+                    borderWidth: 1,
+                  },
+                ]}
+                onPress={() => setSelectedCategory(category)}
+              >
+                <Text
+                  style={[
+                    styles.categoryButtonText,
+                    {
+                      color:
+                        selectedCategory === category
+                          ? Colors.text.light
+                          : getCategoryColor(category),
+                    },
+                  ]}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {selectedCategory && (
+        <View style={styles.tagsContainer}>
+          <Text style={styles.tagCountText}>
+            Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
+          </Text>
+          {filteredTags.map((tag) => (
+            <TouchableOpacity
+              key={tag.id}
+              style={[
+                styles.tagButton,
+                {
+                  backgroundColor: accessTags.includes(tag.id)
+                    ? getCategoryColor(selectedCategory)
+                    : "#fff",
+                  borderColor: getCategoryColor(selectedCategory),
+                  borderWidth: 1,
+                  opacity: !accessTags.includes(tag.id) && accessTags.length >= MAX_ACCESS_TAGS ? 0.5 : 1,
+                },
+              ]}
+              onPress={() => handleToggleTag(tag.id)}
+              disabled={!accessTags.includes(tag.id) && accessTags.length >= MAX_ACCESS_TAGS}
+            >
+              <Text
+                style={[
+                  styles.tagButtonText,
+                  {
+                    color: accessTags.includes(tag.id)
+                      ? "#fff"
+                      : getCategoryColor(selectedCategory),
+                  },
+                ]}
+              >
+                {tag.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+          {selectedCategory && (
+            <AccessTags
+              selectedTags={accessTags}
+              onTagSelect={setAccessTags}
+              category={
+                selectedCategory.toLowerCase() as
+                  | "physical"
+                  | "sensory"
+                  | "cognitive"
+              }
+            />
+          )}
+
             <TouchableOpacity
               style={styles.button}
               onPress={handleCreateAccount}
@@ -205,6 +349,61 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
+    categoryButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: Colors.background.divider,
+    backgroundColor: Colors.background.card,
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  tagButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  tagButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+    tagCountText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+    fontWeight: "500",
+    width: "100%",
+    textAlign: "center",
+  },
+    tagTitleText: {
+      color: "#666",
+      fontSize: 22,
+      margin: 2,
+      textAlign: "center",
+      width: "100%",
+    }
 });
 
 export default CreateAccountScreen;

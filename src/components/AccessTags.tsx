@@ -103,7 +103,7 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
   return (
     <View style={styles.tagsContainer}>
       {filteredTags.map((tag) => {
-        const isSelected = selectedTags.includes(tag.name);
+        const isSelected = selectedTags.includes(tag.id);
         const tagStyle = getTagStyle(tag, isSelected);
 
         return (
@@ -117,7 +117,7 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
                 borderWidth: tagStyle.borderWidth,
               },
             ]}
-            onPress={() => handleTagPress(tag.name)}
+            onPress={() => handleTagPress(tag.id)}
           >
             <Text style={[styles.tagText, { color: tagStyle.textColor }]}>
               {tag.name}
