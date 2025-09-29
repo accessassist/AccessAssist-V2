@@ -222,6 +222,7 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
                   | "sensory"
                   | "cognitive"
               }
+              maxTags={undefined} // Allow unlimited tag selection for reviews
             />
           )}
 

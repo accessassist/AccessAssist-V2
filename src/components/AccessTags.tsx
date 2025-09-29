@@ -15,6 +15,7 @@ interface AccessTagsProps {
   onTagSelect: (tags: string[]) => void;
   category?: "physical" | "sensory" | "cognitive" | null;
   loading?: boolean;
+  maxTags?: number; // Optional prop to limit tag selection, undefined means unlimited
 }
 
 export const AccessTags: React.FC<AccessTagsProps> = ({
@@ -22,6 +23,7 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
   onTagSelect,
   category = null,
   loading = false,
+  maxTags,
 }) => {
   const [tags, setTags] = useState<AccessTag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,11 +47,11 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
     if (selectedTags.includes(tag)) {
       // If tag is already selected, remove it
       onTagSelect(selectedTags.filter((t) => t !== tag));
-    } else if (selectedTags.length < 3) {
-      // If tag is not selected and we have less than 3 tags, add it
+    } else if (maxTags === undefined || selectedTags.length < maxTags) {
+      // If tag is not selected and we haven't reached the limit (or no limit), add it
       onTagSelect([...selectedTags, tag]);
     }
-    // If we already have 3 tags and this one isn't selected, do nothing
+    // If we already have reached the limit and this one isn't selected, do nothing
   };
 
   // Get tag colors based on category and selection state
@@ -103,7 +105,11 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
   return (
     <View style={styles.tagsContainer}>
       {filteredTags.map((tag) => {
-        const isSelected = selectedTags.includes(tag.id);
+        const isSelected = selectedTags.includes(tag.name);
+        const isDisabled =
+          !isSelected &&
+          maxTags !== undefined &&
+          selectedTags.length >= maxTags;
         const tagStyle = getTagStyle(tag, isSelected);
 
         return (
@@ -115,9 +121,11 @@ export const AccessTags: React.FC<AccessTagsProps> = ({
                 backgroundColor: tagStyle.backgroundColor,
                 borderColor: tagStyle.borderColor,
                 borderWidth: tagStyle.borderWidth,
+                opacity: isDisabled ? 0.5 : 1,
               },
             ]}
-            onPress={() => handleTagPress(tag.id)}
+            onPress={() => handleTagPress(tag.name)}
+            disabled={isDisabled}
           >
             <Text style={[styles.tagText, { color: tagStyle.textColor }]}>
               {tag.name}

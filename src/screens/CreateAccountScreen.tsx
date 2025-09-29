@@ -26,22 +26,10 @@ import { auth } from "../config/firebase";
 import { createUser } from "../api/firestoreService";
 import { Colors } from "../constants/colors";
 import { AccessTags } from "../components/AccessTags";
-import { Ionicons } from "@expo/vector-icons";
-import { AccessTag } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "CreateAccount">;
 
 type AccessTagCategory = "physical" | "sensory" | "cognitive";
-
-const ACCESS_TAG_CONFIG: {
-  id: AccessTagCategory;
-  icon: keyof typeof Ionicons.glyphMap;
-  displayName: string;
-}[] = [
-  { id: "physical", icon: "body-outline", displayName: "Physical" },
-  { id: "sensory", icon: "eye-outline", displayName: "Sensory" },
-  { id: "cognitive", icon: "bulb-outline", displayName: "Cognitive" },
-];
 
 const MAX_ACCESS_TAGS = 3;
 
@@ -51,10 +39,9 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<
-      "Physical" | "Sensory" | "Cognitive" | null
-    >(null);
+    "Physical" | "Sensory" | "Cognitive" | null
+  >(null);
   const [accessTags, setAccessTags] = useState<string[]>([]);
-  const [availableAccessTags, setAvailableAccessTags] = useState<AccessTag[]>([]);
 
   const handleCreateAccount = async () => {
     if (!email || !password || !firstName || !lastName) {
@@ -94,34 +81,8 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
       | "physical"
       | "sensory"
       | "cognitive";
-      return Colors.categories[categoryKey].main;
+    return Colors.categories[categoryKey].main;
   };
-
-  const filteredTags = selectedCategory
-    ? availableAccessTags.filter(
-        (tag) => tag.category?.toLowerCase() === selectedCategory
-      )
-    : [];
-
-const handleToggleTag = (tagId: string) => {
-  setAccessTags((prev) => {
-    if (prev.includes(tagId)) {
-      // Remove tag if already selected
-      return prev.filter((t) => t !== tagId);
-    } else {
-      // Check if adding would exceed the limit
-      if (prev.length >= MAX_ACCESS_TAGS) {
-        Alert.alert(
-          "Access tags exceed",
-          `Please choose up to ${MAX_ACCESS_TAGS} access tags. Remove a tag before adding a new one.`
-        );
-        return prev;
-      }
-      // Add tag at the beginning of the array
-      return [tagId, ...prev];
-    }
-  });
-};
 
   return (
     <KeyboardAvoidingView
@@ -173,92 +134,62 @@ const handleToggleTag = (tagId: string) => {
               secureTextEntry
             />
 
-          <Text style={styles.tagCountText}>
-            Account Accessibility Tags
-          </Text>
+            <Text style={styles.tagCountText}>Account Accessibility Tags</Text>
 
-          <View style={styles.categoryButtons}>
-            {(["Physical", "Sensory", "Cognitive"] as const).map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.categoryButton,
-                  selectedCategory === category && {
-                    backgroundColor: getCategoryColor(category),
-                    borderColor: getCategoryColor(category),
-                    borderWidth: 1,
-                  },
-                ]}
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text
-                  style={[
-                    styles.categoryButtonText,
-                    {
-                      color:
-                        selectedCategory === category
-                          ? Colors.text.light
-                          : getCategoryColor(category),
-                    },
-                  ]}
-                >
-                  {category}
+            <View style={styles.categoryButtons}>
+              {(["Physical", "Sensory", "Cognitive"] as const).map(
+                (category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category && {
+                        backgroundColor: getCategoryColor(category),
+                        borderColor: getCategoryColor(category),
+                        borderWidth: 1,
+                      },
+                    ]}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryButtonText,
+                        {
+                          color:
+                            selectedCategory === category
+                              ? Colors.text.light
+                              : getCategoryColor(category),
+                        },
+                      ]}
+                    >
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
+            </View>
+
+            {selectedCategory && (
+              <View style={styles.tagsContainer}>
+                <Text style={styles.tagCountText}>
+                  Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+              </View>
+            )}
 
-          {selectedCategory && (
-        <View style={styles.tagsContainer}>
-          <Text style={styles.tagCountText}>
-            Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
-          </Text>
-          {filteredTags.map((tag) => (
-            <TouchableOpacity
-              key={tag.id}
-              style={[
-                styles.tagButton,
-                {
-                  backgroundColor: accessTags.includes(tag.id)
-                    ? getCategoryColor(selectedCategory)
-                    : "#fff",
-                  borderColor: getCategoryColor(selectedCategory),
-                  borderWidth: 1,
-                  opacity: !accessTags.includes(tag.id) && accessTags.length >= MAX_ACCESS_TAGS ? 0.5 : 1,
-                },
-              ]}
-              onPress={() => handleToggleTag(tag.id)}
-              disabled={!accessTags.includes(tag.id) && accessTags.length >= MAX_ACCESS_TAGS}
-            >
-              <Text
-                style={[
-                  styles.tagButtonText,
-                  {
-                    color: accessTags.includes(tag.id)
-                      ? "#fff"
-                      : getCategoryColor(selectedCategory),
-                  },
-                ]}
-              >
-                {tag.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-          {selectedCategory && (
-            <AccessTags
-              selectedTags={accessTags}
-              onTagSelect={setAccessTags}
-              category={
-                selectedCategory.toLowerCase() as
-                  | "physical"
-                  | "sensory"
-                  | "cognitive"
-              }
-            />
-          )}
+            {selectedCategory && (
+              <AccessTags
+                selectedTags={accessTags}
+                onTagSelect={setAccessTags}
+                category={
+                  selectedCategory.toLowerCase() as
+                    | "physical"
+                    | "sensory"
+                    | "cognitive"
+                }
+                maxTags={MAX_ACCESS_TAGS} // Limit to 3 tags for account creation
+              />
+            )}
 
             <TouchableOpacity
               style={styles.button}
@@ -349,7 +280,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
-    categoryButtons: {
+  categoryButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 16,
@@ -389,7 +320,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-    tagCountText: {
+  tagCountText: {
     fontSize: 14,
     color: "#666",
     marginBottom: 8,
@@ -397,13 +328,13 @@ const styles = StyleSheet.create({
     width: "100%",
     textAlign: "center",
   },
-    tagTitleText: {
-      color: "#666",
-      fontSize: 22,
-      margin: 2,
-      textAlign: "center",
-      width: "100%",
-    }
+  tagTitleText: {
+    color: "#666",
+    fontSize: 22,
+    margin: 2,
+    textAlign: "center",
+    width: "100%",
+  },
 });
 
 export default CreateAccountScreen;
