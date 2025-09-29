@@ -18,6 +18,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -89,123 +91,127 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.contentContainer}>
-          <Image
-            source={require("../../assets/images/appgraphic.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              placeholderTextColor={Colors.text.secondary}
-              value={firstName}
-              onChangeText={setFirstName}
-              autoCapitalize="words"
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.contentContainer}>
+            <Image
+              source={require("../../assets/images/appgraphic.png")}
+              style={styles.logo}
+              resizeMode="contain"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              placeholderTextColor={Colors.text.secondary}
-              value={lastName}
-              onChangeText={setLastName}
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.text.secondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={Colors.text.secondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                placeholderTextColor={Colors.text.secondary}
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                placeholderTextColor={Colors.text.secondary}
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={Colors.text.secondary}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={Colors.text.secondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
 
-            <Text style={styles.tagCountText}>Account Accessibility Tags</Text>
+              <Text style={styles.tagCountText}>
+                Account Accessibility Tags
+              </Text>
 
-            <View style={styles.categoryButtons}>
-              {(["Physical", "Sensory", "Cognitive"] as const).map(
-                (category) => (
-                  <TouchableOpacity
-                    key={category}
-                    style={[
-                      styles.categoryButton,
-                      selectedCategory === category && {
-                        backgroundColor: getCategoryColor(category),
-                        borderColor: getCategoryColor(category),
-                        borderWidth: 1,
-                      },
-                    ]}
-                    onPress={() => setSelectedCategory(category)}
-                  >
-                    <Text
+              <View style={styles.categoryButtons}>
+                {(["Physical", "Sensory", "Cognitive"] as const).map(
+                  (category) => (
+                    <TouchableOpacity
+                      key={category}
                       style={[
-                        styles.categoryButtonText,
-                        {
-                          color:
-                            selectedCategory === category
-                              ? Colors.text.light
-                              : getCategoryColor(category),
+                        styles.categoryButton,
+                        selectedCategory === category && {
+                          backgroundColor: getCategoryColor(category),
+                          borderColor: getCategoryColor(category),
+                          borderWidth: 1,
                         },
                       ]}
+                      onPress={() => setSelectedCategory(category)}
                     >
-                      {category}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-
-            {selectedCategory && (
-              <View style={styles.tagsContainer}>
-                <Text style={styles.tagCountText}>
-                  Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
-                </Text>
+                      <Text
+                        style={[
+                          styles.categoryButtonText,
+                          {
+                            color:
+                              selectedCategory === category
+                                ? Colors.text.light
+                                : getCategoryColor(category),
+                          },
+                        ]}
+                      >
+                        {category}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                )}
               </View>
-            )}
 
-            {selectedCategory && (
-              <AccessTags
-                selectedTags={accessTags}
-                onTagSelect={setAccessTags}
-                category={
-                  selectedCategory.toLowerCase() as
-                    | "physical"
-                    | "sensory"
-                    | "cognitive"
-                }
-                maxTags={MAX_ACCESS_TAGS} // Limit to 3 tags for account creation
-              />
-            )}
+              {selectedCategory && (
+                <View style={styles.tagsContainer}>
+                  <Text style={styles.tagCountText}>
+                    Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
+                  </Text>
+                </View>
+              )}
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleCreateAccount}
-            >
-              <Text style={styles.buttonText}>Create Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backButtonText}>Back to Login</Text>
-            </TouchableOpacity>
+              {selectedCategory && (
+                <AccessTags
+                  selectedTags={accessTags}
+                  onTagSelect={setAccessTags}
+                  category={
+                    selectedCategory.toLowerCase() as
+                      | "physical"
+                      | "sensory"
+                      | "cognitive"
+                  }
+                  maxTags={MAX_ACCESS_TAGS} // Limit to 3 tags for account creation
+                />
+              )}
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleCreateAccount}
+              >
+                <Text style={styles.buttonText}>Create Account</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.backButtonText}>Back to Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
