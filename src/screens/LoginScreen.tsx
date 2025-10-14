@@ -34,11 +34,52 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { login } = useAuth();
 
   const handleLogin = async () => {
+    // Validate input fields
+    if (!email.trim()) {
+      Alert.alert("Missing Information", "Please enter your email address.");
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert("Missing Information", "Please enter your password.");
+      return;
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       // The navigation will happen automatically when the user state is updated
     } catch (error) {
-      Alert.alert("Login Error", (error as Error).message);
+      const errorMessage = (error as Error).message;
+      let userFriendlyMessage = "Login failed. Please try again.";
+
+      // Provide more specific error messages based on Firebase error codes
+      if (errorMessage.includes("user-not-found")) {
+        userFriendlyMessage =
+          "No account found with this email address. Please check your email or create a new account.";
+      } else if (errorMessage.includes("wrong-password")) {
+        userFriendlyMessage = "Incorrect password. Please try again.";
+      } else if (errorMessage.includes("invalid-email")) {
+        userFriendlyMessage =
+          "Invalid email address. Please check your email and try again.";
+      } else if (errorMessage.includes("user-disabled")) {
+        userFriendlyMessage =
+          "This account has been disabled. Please contact support.";
+      } else if (errorMessage.includes("too-many-requests")) {
+        userFriendlyMessage =
+          "Too many failed login attempts. Please try again later.";
+      } else if (errorMessage.includes("network-request-failed")) {
+        userFriendlyMessage =
+          "Network error. Please check your internet connection and try again.";
+      }
+
+      Alert.alert("Login Failed", userFriendlyMessage);
     }
   };
 

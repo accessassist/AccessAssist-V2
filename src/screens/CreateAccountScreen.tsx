@@ -91,17 +91,24 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.contentContainer}>
-            <Image
-              source={require("../../assets/images/appgraphic.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+      <View style={styles.contentContainer}>
+        {/* Fixed logo section */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../../assets/images/appgraphic.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Scrollable form section */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
@@ -139,6 +146,10 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
 
               <Text style={styles.tagCountText}>
                 Account Accessibility Tags
+              </Text>
+              <Text style={styles.helperText}>
+                You may optionally select up to three access preferences that
+                meet your needs
               </Text>
 
               <View style={styles.categoryButtons}>
@@ -209,9 +220,9 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.backButtonText}>Back to Login</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -222,13 +233,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.app,
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: 20,
   },
   contentContainer: {
     flex: 1,
+    padding: 20,
+  },
+  logoContainer: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
   },
   logo: {
     width: 300,
@@ -338,6 +356,14 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 22,
     margin: 2,
+    textAlign: "center",
+    width: "100%",
+  },
+  helperText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+    fontStyle: "italic",
     textAlign: "center",
     width: "100%",
   },
