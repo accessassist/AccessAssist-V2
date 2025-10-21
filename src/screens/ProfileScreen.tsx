@@ -24,9 +24,11 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, TabParamList } from "../navigation/types";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { AccessTag } from "../types";
-import { getAccessTags } from "../api/firestoreService";
+import { AccessTag, Review } from "../types";
+import { getAccessTags, getUserReviews } from "../api/firestoreService";
 import { Colors } from "../constants/colors";
+import { AccessTags } from "../components/AccessTags";
+import ReviewItem from "../components/ReviewItem";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Profile">,
@@ -43,26 +45,39 @@ const ACCESS_TAG_CONFIG: {
   { id: "physical", icon: "body-outline", displayName: "Physical" },
   { id: "sensory", icon: "eye-outline", displayName: "Sensory" },
   { id: "cognitive", icon: "bulb-outline", displayName: "Cognitive" },
-  ];
+];
 
 const MAX_ACCESS_TAGS = 3;
 const DEFAULT_PROFILE_PIC =
   "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
+// Static profile image - cannot be edited
+const STATIC_PROFILE_PIC =
+  "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=identicon&f=y";
+
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout, updateUserProfile } = useAuth();
-  const [profilePic, setProfilePic] = useState(
-    user?.photoURL || DEFAULT_PROFILE_PIC
-  );
+  // Use static profile image instead of user photo
+  const [profilePic, setProfilePic] = useState(STATIC_PROFILE_PIC);
+
+  // Commented out: Original editable profile pic state
+  // const [profilePic, setProfilePic] = useState(
+  //   user?.photoURL || DEFAULT_PROFILE_PIC
+  // );
   const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [accessTags, setAccessTags] = useState<string[]>(
     user?.preferredAccessTags || []
   );
-  const [availableAccessTags, setAvailableAccessTags] = useState<AccessTag[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<AccessTagCategory | null>(null);
+  const [availableAccessTags, setAvailableAccessTags] = useState<AccessTag[]>(
+    []
+  );
+  const [selectedCategory, setSelectedCategory] =
+    useState<AccessTagCategory | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userReviews, setUserReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Keep track of original values for comparison
   const [originalFirstName, setOriginalFirstName] = useState(
@@ -71,7 +86,8 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const [originalLastName, setOriginalLastName] = useState(
     user?.lastName || ""
   );
-  const [originalProfilePic] = useState(user?.photoURL || DEFAULT_PROFILE_PIC);
+  // Commented out: Original profile pic tracking
+  // const [originalProfilePic] = useState(user?.photoURL || DEFAULT_PROFILE_PIC);
   const [originalAccessTags] = useState<string[]>(
     user?.preferredAccessTags || []
   );
@@ -88,8 +104,23 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       }
     };
 
+    const loadUserReviews = async () => {
+      if (!user?.id) return;
+
+      setReviewsLoading(true);
+      try {
+        const reviews = await getUserReviews(user.id);
+        setUserReviews(reviews);
+      } catch (error) {
+        console.error("Error loading user reviews:", error);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
     loadAccessTags();
-  }, []);
+    loadUserReviews();
+  }, [user?.id]);
 
   const handleStartEditing = () => {
     setOriginalFirstName(firstName);
@@ -101,7 +132,8 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     // Restore original values
     setFirstName(originalFirstName);
     setLastName(originalLastName);
-    setProfilePic(originalProfilePic);
+    // Commented out: Profile pic restoration (using static image now)
+    // setProfilePic(originalProfilePic);
     setAccessTags(originalAccessTags);
     setSelectedCategory(null);
     setIsEditing(false);
@@ -119,7 +151,8 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       // Only include changed fields
       if (firstName !== originalFirstName) updates.firstName = firstName;
       if (lastName !== originalLastName) updates.lastName = lastName;
-      if (profilePic !== originalProfilePic) updates.photoURL = profilePic;
+      // Commented out: Photo update logic (using static image now)
+      // if (profilePic !== originalProfilePic) updates.photoURL = profilePic;
       if (JSON.stringify(accessTags) !== JSON.stringify(originalAccessTags)) {
         updates.preferredAccessTags = accessTags;
       }
@@ -138,26 +171,6 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleToggleTag = (tagId: string) => {
-    setAccessTags((prev) => {
-      if (prev.includes(tagId)) {
-        // Remove tag if already selected
-        return prev.filter((t) => t !== tagId);
-      } else {
-        // Check if adding would exceed the limit
-        if (prev.length >= MAX_ACCESS_TAGS) {
-          Alert.alert(
-            "Access tags exceed",
-            `Please choose up to ${MAX_ACCESS_TAGS} access tags. Remove a tag before adding a new one.`
-          );
-          return prev;
-        }
-        // Add tag at the beginning of the array
-        return [tagId, ...prev];
-      }
-    });
-  };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -170,36 +183,37 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleChangePhoto = async () => {
-    try {
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission Required",
-          "Please allow access to your photo library"
-        );
-        return;
-      }
+  // Commented out: Photo selection functionality (replaced with static image)
+  // const handleChangePhoto = async () => {
+  //   try {
+  //     const permissionResult =
+  //       await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //     if (!permissionResult.granted) {
+  //       Alert.alert(
+  //         "Permission Required",
+  //         "Please allow access to your photo library"
+  //       );
+  //       return;
+  //     }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.5,
-      });
+  //     const result = await ImagePicker.launchImageLibraryAsync({
+  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //       allowsEditing: true,
+  //       aspect: [1, 1],
+  //       quality: 0.5,
+  //     });
 
-      if (!result.canceled && result.assets[0]) {
-        setProfilePic(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error in photo picker:", error);
-      Alert.alert(
-        "Error",
-        "There was an error accessing the photo library. Please try again."
-      );
-    }
-  };
+  //     if (!result.canceled && result.assets[0]) {
+  //       setProfilePic(result.assets[0].uri);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error in photo picker:", error);
+  //     Alert.alert(
+  //       "Error",
+  //       "There was an error accessing the photo library. Please try again."
+  //     );
+  //   }
+  // };
 
   const getCategoryColor = (category: AccessTagCategory) => {
     switch (category) {
@@ -227,9 +241,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <View>
         <Text style={styles.sectionTitle}>Preferred Access Features</Text>
         <Text style={styles.helperText}>
-          Choose up to {MAX_ACCESS_TAGS} access tags that best describe your needs
+          Choose up to {MAX_ACCESS_TAGS} access tags that best describe your
+          needs
         </Text>
-        
+
         <View style={styles.categoryButtons}>
           {ACCESS_TAG_CONFIG.map((category) => (
             <TouchableOpacity
@@ -266,37 +281,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.tagCountText}>
               Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
             </Text>
-            {filteredTags.map((tag) => (
-              <TouchableOpacity
-                key={tag.id}
-                style={[
-                  styles.tagButton,
-                  {
-                    backgroundColor: accessTags.includes(tag.id)
-                      ? getCategoryColor(selectedCategory)
-                      : "#fff",
-                    borderColor: getCategoryColor(selectedCategory),
-                    borderWidth: 1,
-                    opacity: !accessTags.includes(tag.id) && accessTags.length >= MAX_ACCESS_TAGS ? 0.5 : 1,
-                  },
-                ]}
-                onPress={() => handleToggleTag(tag.id)}
-                disabled={!accessTags.includes(tag.id) && accessTags.length >= MAX_ACCESS_TAGS}
-              >
-                <Text
-                  style={[
-                    styles.tagButtonText,
-                    {
-                      color: accessTags.includes(tag.id)
-                        ? "#fff"
-                        : getCategoryColor(selectedCategory),
-                    },
-                  ]}
-                >
-                  {tag.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <AccessTags
+              selectedTags={accessTags}
+              onTagSelect={setAccessTags}
+              category={selectedCategory}
+              maxTags={MAX_ACCESS_TAGS}
+            />
           </View>
         )}
       </View>
@@ -312,10 +302,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.currentTagsWrapper}>
           {user.preferredAccessTags.map((tagId) => {
             // Find the tag in available tags using the ID
-            const tagData = availableAccessTags.find(t => t.id === tagId);
+            const tagData = availableAccessTags.find((t) => t.id === tagId);
             const category = tagData?.category as AccessTagCategory;
             const tagConfig = ACCESS_TAG_CONFIG.find((t) => t.id === category);
-            
+
             return (
               <View key={tagId} style={styles.currentTag}>
                 {tagConfig && (
@@ -326,10 +316,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                     style={styles.currentTagIcon}
                   />
                 )}
-                <Text 
+                <Text
                   style={[
                     styles.currentTagText,
-                    { color: category ? getCategoryColor(category) : "#007AFF" }
+                    {
+                      color: category ? getCategoryColor(category) : "#007AFF",
+                    },
                   ]}
                 >
                   {tagData?.name || tagId}
@@ -341,7 +333,73 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       </View>
     );
   };
-  
+
+  const handleReviewPress = (review: Review) => {
+    // Create a facility object from the review data for navigation
+    const facility = {
+      id: review.facilityId,
+      name: review.facilityName,
+      address: review.facilityAddress,
+      location: review.facilityLocation,
+      physicalRating: 0,
+      sensoryRating: 0,
+      cognitiveRating: 0,
+      reviewCount: 0,
+      commonAccessTags: [],
+      accessTags: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    navigation.navigate("Place", { place: facility });
+  };
+
+  const renderMyReviews = () => {
+    if (reviewsLoading) {
+      return (
+        <View style={styles.reviewsSection}>
+          <Text style={styles.sectionTitle}>My Reviews</Text>
+          <Text style={styles.loadingText}>Loading your reviews...</Text>
+        </View>
+      );
+    }
+
+    if (userReviews.length === 0) {
+      return (
+        <View style={styles.reviewsSection}>
+          <Text style={styles.sectionTitle}>My Reviews</Text>
+          <Text style={styles.emptyReviewsText}>
+            You haven't written any reviews yet.
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.reviewsSection}>
+        <Text style={styles.sectionTitle}>
+          My Reviews ({userReviews.length})
+        </Text>
+        <ScrollView
+          style={styles.reviewsScrollView}
+          showsVerticalScrollIndicator={false}
+        >
+          {userReviews.map((review) => (
+            <TouchableOpacity
+              key={review.id}
+              onPress={() => handleReviewPress(review)}
+              style={styles.reviewItemContainer}
+            >
+              <ReviewItem
+                review={review}
+                userName={`${user?.firstName} ${user?.lastName}`}
+              />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -374,6 +432,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <View style={styles.profileContainer}>
+        {/* Static profile image - cannot be edited */}
+        <View style={styles.profileImageContainer}>
+          <Image source={{ uri: profilePic }} style={styles.profileImage} />
+        </View>
+
+        {/* Commented out: Editable profile image functionality
         <TouchableOpacity onPress={isEditing ? handleChangePhoto : undefined}>
           <View style={styles.profileImageContainer}>
             <Image source={{ uri: profilePic }} style={styles.profileImage} />
@@ -384,6 +448,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             )}
           </View>
         </TouchableOpacity>
+        */}
 
         {isEditing ? (
           <View style={styles.editForm}>
@@ -415,6 +480,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <View style={styles.content}>
+        {!isEditing && renderMyReviews()}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons
             name="log-out-outline"
@@ -648,6 +714,22 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     width: "100%",
     textAlign: "center",
+  },
+  reviewsSection: {
+    marginBottom: 24,
+  },
+  reviewsScrollView: {
+    maxHeight: 300,
+  },
+  reviewItemContainer: {
+    marginBottom: 8,
+  },
+  emptyReviewsText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: "center",
+    fontStyle: "italic",
+    marginTop: 8,
   },
 });
 

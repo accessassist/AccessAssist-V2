@@ -18,6 +18,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -25,14 +27,23 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { createUser } from "../api/firestoreService";
 import { Colors } from "../constants/colors";
+import { AccessTags } from "../components/AccessTags";
 
 type Props = NativeStackScreenProps<RootStackParamList, "CreateAccount">;
+
+type AccessTagCategory = "physical" | "sensory" | "cognitive";
+
+const MAX_ACCESS_TAGS = 3;
 
 const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<
+    "Physical" | "Sensory" | "Cognitive" | null
+  >(null);
+  const [accessTags, setAccessTags] = useState<string[]>([]);
 
   const handleCreateAccount = async () => {
     if (!email || !password || !firstName || !lastName) {
@@ -52,7 +63,7 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
         email,
         firstName,
         lastName,
-        preferredAccessTags: [],
+        preferredAccessTags: accessTags,
         createdAt: new Date().toISOString(),
       });
 
@@ -67,70 +78,151 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const getCategoryColor = (category: "Physical" | "Sensory" | "Cognitive") => {
+    const categoryKey = category.toLowerCase() as
+      | "physical"
+      | "sensory"
+      | "cognitive";
+    return Colors.categories[categoryKey].main;
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.contentContainer}>
+      <View style={styles.contentContainer}>
+        {/* Fixed logo section */}
+        <View style={styles.logoContainer}>
           <Image
             source={require("../../assets/images/appgraphic.png")}
             style={styles.logo}
             resizeMode="contain"
           />
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              placeholderTextColor={Colors.text.secondary}
-              value={firstName}
-              onChangeText={setFirstName}
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              placeholderTextColor={Colors.text.secondary}
-              value={lastName}
-              onChangeText={setLastName}
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.text.secondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={Colors.text.secondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleCreateAccount}
-            >
-              <Text style={styles.buttonText}>Create Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backButtonText}>Back to Login</Text>
-            </TouchableOpacity>
-          </View>
         </View>
-      </ScrollView>
+
+        {/* Scrollable form section */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                placeholderTextColor={Colors.text.secondary}
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                placeholderTextColor={Colors.text.secondary}
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={Colors.text.secondary}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={Colors.text.secondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              <Text style={styles.tagCountText}>
+                Account Accessibility Tags
+              </Text>
+              <Text style={styles.helperText}>
+                You may optionally select up to three access preferences that
+                meet your needs
+              </Text>
+
+              <View style={styles.categoryButtons}>
+                {(["Physical", "Sensory", "Cognitive"] as const).map(
+                  (category) => (
+                    <TouchableOpacity
+                      key={category}
+                      style={[
+                        styles.categoryButton,
+                        selectedCategory === category && {
+                          backgroundColor: getCategoryColor(category),
+                          borderColor: getCategoryColor(category),
+                          borderWidth: 1,
+                        },
+                      ]}
+                      onPress={() => setSelectedCategory(category)}
+                    >
+                      <Text
+                        style={[
+                          styles.categoryButtonText,
+                          {
+                            color:
+                              selectedCategory === category
+                                ? Colors.text.light
+                                : getCategoryColor(category),
+                          },
+                        ]}
+                      >
+                        {category}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                )}
+              </View>
+
+              {selectedCategory && (
+                <View style={styles.tagsContainer}>
+                  <Text style={styles.tagCountText}>
+                    Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
+                  </Text>
+                </View>
+              )}
+
+              {selectedCategory && (
+                <AccessTags
+                  selectedTags={accessTags}
+                  onTagSelect={setAccessTags}
+                  category={
+                    selectedCategory.toLowerCase() as
+                      | "physical"
+                      | "sensory"
+                      | "cognitive"
+                  }
+                  maxTags={MAX_ACCESS_TAGS} // Limit to 3 tags for account creation
+                />
+              )}
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleCreateAccount}
+              >
+                <Text style={styles.buttonText}>Create Account</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.backButtonText}>Back to Login</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -141,13 +233,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.app,
   },
   scrollContent: {
-    flexGrow: 1,
+    paddingBottom: 20,
   },
   contentContainer: {
     flex: 1,
+    padding: 20,
+  },
+  logoContainer: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
   },
   logo: {
     width: 300,
@@ -204,6 +303,69 @@ const styles = StyleSheet.create({
     color: Colors.button.primary.background,
     fontSize: 16,
     fontWeight: "500",
+  },
+  categoryButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: Colors.background.divider,
+    backgroundColor: Colors.background.card,
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  tagButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  tagButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  tagCountText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+    fontWeight: "500",
+    width: "100%",
+    textAlign: "center",
+  },
+  tagTitleText: {
+    color: "#666",
+    fontSize: 22,
+    margin: 2,
+    textAlign: "center",
+    width: "100%",
+  },
+  helperText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+    fontStyle: "italic",
+    textAlign: "center",
+    width: "100%",
   },
 });
 

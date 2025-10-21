@@ -18,6 +18,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -32,11 +34,52 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { login } = useAuth();
 
   const handleLogin = async () => {
+    // Validate input fields
+    if (!email.trim()) {
+      Alert.alert("Missing Information", "Please enter your email address.");
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert("Missing Information", "Please enter your password.");
+      return;
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       // The navigation will happen automatically when the user state is updated
     } catch (error) {
-      Alert.alert("Login Error", (error as Error).message);
+      const errorMessage = (error as Error).message;
+      let userFriendlyMessage = "Login failed. Please try again.";
+
+      // Provide more specific error messages based on Firebase error codes
+      if (errorMessage.includes("user-not-found")) {
+        userFriendlyMessage =
+          "No account found with this email address. Please check your email or create a new account.";
+      } else if (errorMessage.includes("wrong-password")) {
+        userFriendlyMessage = "Incorrect password. Please try again.";
+      } else if (errorMessage.includes("invalid-email")) {
+        userFriendlyMessage =
+          "Invalid email address. Please check your email and try again.";
+      } else if (errorMessage.includes("user-disabled")) {
+        userFriendlyMessage =
+          "This account has been disabled. Please contact support.";
+      } else if (errorMessage.includes("too-many-requests")) {
+        userFriendlyMessage =
+          "Too many failed login attempts. Please try again later.";
+      } else if (errorMessage.includes("network-request-failed")) {
+        userFriendlyMessage =
+          "Network error. Please check your internet connection and try again.";
+      }
+
+      Alert.alert("Login Failed", userFriendlyMessage);
     }
   };
 
@@ -45,46 +88,50 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.contentContainer}>
-          <Image
-            source={require("../../assets/images/appgraphic.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={Colors.text.secondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.contentContainer}>
+            <Image
+              source={require("../../assets/images/appgraphic.png")}
+              style={styles.logo}
+              resizeMode="contain"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={Colors.text.secondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.createAccountButton}
-              onPress={() => navigation.navigate("CreateAccount")}
-            >
-              <Text style={styles.createAccountButtonText}>Create Account</Text>
-            </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={Colors.text.secondary}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={Colors.text.secondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+              <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText}>Login</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.createAccountButton}
+                onPress={() => navigation.navigate("CreateAccount")}
+              >
+                <Text style={styles.createAccountButtonText}>
+                  Create Account
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };

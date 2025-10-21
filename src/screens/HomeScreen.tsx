@@ -372,18 +372,14 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               {selectedCategory && (
                 <AccessTags
                   selectedTags={tempSelectedTags}
-                  onTagSelect={(tags) => {
-                    // Limit selection to 3 tags maximum
-                    if (tags.length <= 3) {
-                      setTempSelectedTags(tags);
-                    }
-                  }}
+                  onTagSelect={setTempSelectedTags}
                   category={
                     selectedCategory.toLowerCase() as
                       | "physical"
                       | "sensory"
                       | "cognitive"
                   }
+                  maxTags={3} // Limit to 3 tags for filtering
                 />
               )}
             </ScrollView>
