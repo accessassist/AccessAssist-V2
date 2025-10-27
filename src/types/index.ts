@@ -22,6 +22,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 export interface Facility {

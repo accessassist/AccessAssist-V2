@@ -11,6 +11,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { getUser, createUser, updateUser as updateUserInFirestore } from "../api/firestoreService";
 
@@ -89,6 +90,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return userObj;
   };
 
+  const resetPassword = async (email: string): Promise<void> => {
+    if (!email) throw new Error("Email is required");
+    try {
+      // Firebase sendPasswordResetEmail will send an email if the account exists,
+      // and fail silently (for security) if it doesn't exist.
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       await firebaseSignOut(auth);
@@ -122,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     login,
     logout,
     updateUserProfile,
+  resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

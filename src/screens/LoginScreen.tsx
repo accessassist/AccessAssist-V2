@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Modal,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +22,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
@@ -32,6 +34,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const { resetPassword } = useAuth();
+  const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   const handleLogin = async () => {
     // Validate input fields
@@ -83,6 +89,37 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    // If user hasn't typed an email in the main input, open modal to prompt
+    if (!email.trim()) {
+      setForgotEmail("");
+      setForgotModalVisible(true);
+      return;
+    }
+
+    await sendResetForEmail(email.trim());
+  };
+
+  const sendResetForEmail = async (targetEmail: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(targetEmail)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    try {
+      await resetPassword(targetEmail);
+      setForgotModalVisible(false);
+      Alert.alert(
+        'Reset Email Sent',
+        'If an account exists with that email, a password reset link has been sent. Please check your inbox.'
+      );
+    } catch (error) {
+      const message = (error as Error).message || 'Failed to send reset email.';
+      Alert.alert('Error', message);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -109,14 +146,26 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor={Colors.text.secondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Password"
+                  placeholderTextColor={Colors.text.secondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={24}
+                    color={Colors.text.secondary}
+                  />
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Login</Text>
               </TouchableOpacity>
@@ -128,6 +177,54 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   Create Account
                 </Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.forgotPasswordButton}
+                onPress={handleForgotPassword}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              <Modal
+                visible={forgotModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setForgotModalVisible(false)}
+              >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                      <Text style={styles.modalTitle}>Reset Password</Text>
+                      <Text style={styles.modalText}>
+                        Enter the email address associated with your account.
+                      </Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        placeholderTextColor={Colors.text.secondary}
+                        value={forgotEmail}
+                        onChangeText={setForgotEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                      />
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <TouchableOpacity
+                          style={[styles.button, { flex: 1, marginRight: 8 }]}
+                          onPress={() => sendResetForEmail(forgotEmail.trim())}
+                        >
+                          <Text style={styles.buttonText}>Send</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.createAccountButton, { flex: 1, marginLeft: 8 }]}
+                          onPress={() => setForgotModalVisible(false)}
+                        >
+                          <Text style={styles.createAccountButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </Modal>
             </View>
           </View>
         </ScrollView>
@@ -178,6 +275,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text.primary,
   },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 50,
+    backgroundColor: Colors.background.card,
+    borderColor: Colors.background.divider,
+    borderWidth: 1,
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  passwordInput: {
+    flex: 1,
+    height: '100%',
+    padding: 15,
+    fontSize: 16,
+    color: Colors.text.primary,
+  },
+  eyeButton: {
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   button: {
     backgroundColor: Colors.button.primary.background,
     padding: 15,
@@ -205,6 +324,39 @@ const styles = StyleSheet.create({
     color: Colors.button.primary.background,
     fontSize: 16,
     fontWeight: "500",
+  },
+  forgotPasswordButton: {
+    padding: 12,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    color: Colors.text.secondary,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  modalText: {
+    color: Colors.text.primary,
+    marginBottom: 12,
   },
 });
 
