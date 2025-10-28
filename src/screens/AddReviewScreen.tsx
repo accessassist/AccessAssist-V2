@@ -6,7 +6,7 @@
   within the constants folder if you are looking to change global color/text options.
 */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -41,6 +41,7 @@ interface CategoryButtonStyle {
 const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const { facilityId, place } = route.params;
   const { user } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [physicalRating, setPhysicalRating] = useState(0);
   const [sensoryRating, setSensoryRating] = useState(0);
   const [cognitiveRating, setCognitiveRating] = useState(0);
@@ -57,6 +58,13 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         ? prevTags.filter((t) => t !== tag)
         : [...prevTags, tag]
     );
+  };
+
+  const handleCommentFocus = () => {
+    // Scroll to the comment section when focused
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   const handleSubmit = async () => {
@@ -122,11 +130,14 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
             <Text style={styles.sectionTitle}>Accessibility Ratings</Text>
@@ -238,8 +249,10 @@ const AddReviewScreen: React.FC<Props> = ({ navigation, route }) => {
               placeholderTextColor={Colors.text.secondary}
               value={comment}
               onChangeText={setComment}
+              onFocus={handleCommentFocus}
               multiline
               numberOfLines={4}
+              textAlignVertical="top"
             />
 
             <View style={styles.anonymousToggle}>
@@ -277,6 +290,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 50, // Extra padding at bottom for better scrolling
   },
   content: {
     padding: 20,
@@ -321,8 +335,10 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     minHeight: 100,
+    maxHeight: 150, // Limit max height to prevent excessive growth
     textAlignVertical: "top",
     color: Colors.text.primary,
+    fontSize: 16,
   },
   anonymousToggle: {
     flexDirection: "row",

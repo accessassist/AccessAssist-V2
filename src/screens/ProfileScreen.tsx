@@ -22,6 +22,7 @@ import { CompositeScreenProps } from "@react-navigation/native";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, TabParamList } from "../navigation/types";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { AccessTag, Review } from "../types";
@@ -104,23 +105,29 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       }
     };
 
-    const loadUserReviews = async () => {
-      if (!user?.id) return;
-
-      setReviewsLoading(true);
-      try {
-        const reviews = await getUserReviews(user.id);
-        setUserReviews(reviews);
-      } catch (error) {
-        console.error("Error loading user reviews:", error);
-      } finally {
-        setReviewsLoading(false);
-      }
-    };
-
     loadAccessTags();
-    loadUserReviews();
   }, [user?.id]);
+
+  // Load user reviews when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadUserReviews = async () => {
+        if (!user?.id) return;
+
+        setReviewsLoading(true);
+        try {
+          const reviews = await getUserReviews(user.id);
+          setUserReviews(reviews);
+        } catch (error) {
+          console.error("Error loading user reviews:", error);
+        } finally {
+          setReviewsLoading(false);
+        }
+      };
+
+      loadUserReviews();
+    }, [user?.id])
+  );
 
   const handleStartEditing = () => {
     setOriginalFirstName(firstName);

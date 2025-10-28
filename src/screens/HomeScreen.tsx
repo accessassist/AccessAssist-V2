@@ -263,8 +263,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         animationType="slide"
         onRequestClose={toggleFilterModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={toggleFilterModal}
+        >
+          <TouchableOpacity
+            style={styles.modalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Text style={styles.modalTitle}>Filter by Access Tags</Text>
 
             <TouchableOpacity
@@ -313,8 +321,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             >
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Tag Selection Modal */}
@@ -324,8 +332,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         animationType="slide"
         onRequestClose={handleCancelTagSelection}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.tagSelectionModalContent}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={handleCancelTagSelection}
+        >
+          <TouchableOpacity
+            style={styles.tagSelectionModalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Text style={styles.modalTitle}>Select Access Tags</Text>
             <Text style={styles.selectionCounter}>
               {tempSelectedTags.length}/3 selected
@@ -398,8 +414,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.applyTagButtonText}>Apply</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
