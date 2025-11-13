@@ -33,8 +33,6 @@ type Props = NativeStackScreenProps<RootStackParamList, "CreateAccount">;
 
 type AccessTagCategory = "physical" | "sensory" | "cognitive";
 
-const MAX_ACCESS_TAGS = 3;
-
 const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -148,7 +146,7 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
                 Account Accessibility Tags
               </Text>
               <Text style={styles.helperText}>
-                You may optionally select up to three access preferences that
+                You may optionally select access preferences that
                 meet your needs
               </Text>
 
@@ -188,7 +186,7 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
               {selectedCategory && (
                 <View style={styles.tagsContainer}>
                   <Text style={styles.tagCountText}>
-                    Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
+                    Selected: {accessTags.length}
                   </Text>
                 </View>
               )}
@@ -203,7 +201,6 @@ const CreateAccountScreen: React.FC<Props> = ({ navigation }) => {
                       | "sensory"
                       | "cognitive"
                   }
-                  maxTags={MAX_ACCESS_TAGS} // Limit to 3 tags for account creation
                 />
               )}
 
