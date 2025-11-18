@@ -20,6 +20,8 @@ AccessAssist is a React Native application (Expo) that helps users find and revi
 - `android/` and `ios/` — native project folders (Expo-managed or ejected parts)
 - `assets/` — fonts, images
 
+Our firebase (need to login AccessAssist email): https://console.firebase.google.com/u/0/project/access-assist-v2/firestore/databases/-default-/data/~2Faccess_tags~2F1hoKOXu5DX3jz3SMmI7W?fb_gclid=CjwKCAjw3tzHBhBREiwAlMJoUh2mmjzGITDuZkJjP3L4FycJpsdmahCsht3E6HqPyoda7OutuQD9ehoCSS4QAvD_BwE
+
 
 Tech stack
 - Frontend: React Native with Expo, TypeScript
@@ -49,7 +51,6 @@ Environment variables & secrets
 (The .gitignore already excludes .env files, so you can manually create one safely.)
 All the field needed for the project to run is in this folder. 
 NOTE: You have to log in to AccessAssist Gmail to view this. DO NOT EVER expose this, or some random hacker will use this information to charge our sponsors! https://docs.google.com/document/d/19MpViMw4OhzgHKbcrxVnAAC7YvUFXk_UMi3R5Aytw0w/edit?tab=t.0 
-
 
 
 Local setup (macOS, zsh)
