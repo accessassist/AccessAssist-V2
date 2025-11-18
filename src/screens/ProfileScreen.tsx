@@ -48,7 +48,6 @@ const ACCESS_TAG_CONFIG: {
   { id: "cognitive", icon: "bulb-outline", displayName: "Cognitive" },
 ];
 
-const MAX_ACCESS_TAGS = 3;
 const DEFAULT_PROFILE_PIC =
   "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
@@ -248,7 +247,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <View>
         <Text style={styles.sectionTitle}>Preferred Access Features</Text>
         <Text style={styles.helperText}>
-          Choose up to {MAX_ACCESS_TAGS} access tags that best describe your
+          Choose access tags that best describe your
           needs
         </Text>
 
@@ -286,13 +285,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         {selectedCategory && (
           <View style={styles.tagsContainer}>
             <Text style={styles.tagCountText}>
-              Selected: {accessTags.length}/{MAX_ACCESS_TAGS}
+              Selected: {accessTags.length}
             </Text>
             <AccessTags
               selectedTags={accessTags}
               onTagSelect={setAccessTags}
               category={selectedCategory}
-              maxTags={MAX_ACCESS_TAGS}
             />
           </View>
         )}

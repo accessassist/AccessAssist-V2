@@ -344,7 +344,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           >
             <Text style={styles.modalTitle}>Select Access Tags</Text>
             <Text style={styles.selectionCounter}>
-              {tempSelectedTags.length}/3 selected
+              {tempSelectedTags.length} selected
             </Text>
 
             <View style={styles.categoryButtons}>
@@ -395,7 +395,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                       | "sensory"
                       | "cognitive"
                   }
-                  maxTags={3} // Limit to 3 tags for filtering
                 />
               )}
             </ScrollView>
